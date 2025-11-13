@@ -89,16 +89,16 @@ public class ProbDecoder {
 
                         //Vi∈Ai\j
                         for(int countL = 0;countL < vNodes.length;countL++){
-                            vNodes[vNodes.length-1-countL] =
+                            vNodes[countL] =
                                     (sigma % Math.pow(2,countL+1) < Math.pow(2,countL)) ? 0 : 1;
                         }
 
                         //Π
                         for(int k = 0;k < vNodes.length;k++){
                             if(connectedV.get(k) < j){
-                                product *= msgVtoC[k][i][vNodes[k]];
+                                product *= msgVtoC[connectedV.get(k)][i][vNodes[k]];
                             }else if(connectedV.get(k) >= j){
-                                product *= msgVtoC[k][i][vNodes[k+1]];
+                                product *= msgVtoC[connectedV.get(k+1)][i][vNodes[k]];
                             }
                         }
 
