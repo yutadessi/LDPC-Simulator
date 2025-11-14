@@ -13,8 +13,8 @@ public class Channel {
                 r[i] = c[i];
             }
         }
-        System.out.println("受信語r ");
-        Print.Array(r);
+//        System.out.println("受信語r ");
+//        Print.Array(r);
         return r;
     }
     public static void CheckError (int[] c,int[] r,double e){
@@ -22,6 +22,6 @@ public class Channel {
         for(int i = 0;i < c.length;i++){
             count += c[i] - r[i] != 0 ? 1 : 0;
         }
-        System.out.println("通信路誤り率e = " + e + ",実際の通信路誤り率:" + (count / 1000));
+        System.out.println("通信路誤り率e = " + e + ",実際の通信路誤り率:" + (count / c.length));
     }
 }

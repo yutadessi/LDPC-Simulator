@@ -1,5 +1,4 @@
 package LDPC;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
@@ -74,6 +73,9 @@ public class ProbDecoder {
                     }
                     msgVtoC[j][i][0] = p0;
                     msgVtoC[j][i][1] = p1;
+//                    //----手計算用表示プログラム(後で削除)----
+//                    System.out.println("msg" + j +"," + i + ",0 :" + msgVtoC[j][i][0] + ",msg" + j +"," + i + ",1 :" + msgVtoC[j][i][1]);
+//                    //--------------ここまで--------------
                 }
             }
 
@@ -111,6 +113,9 @@ public class ProbDecoder {
                     }
                     msgCtoV[i][j][0] = sum0;
                     msgCtoV[i][j][1] = sum1;
+//                    //----手計算用表示プログラム(後で削除)----
+//                    System.out.println("msg" + i +"," + j + ",0 :" + msgCtoV[i][j][0] + ",msg" + i +"," + j + ",1 :" + msgCtoV[i][j][1]);
+//                    //--------------ここまで--------------
                 }
             }
 
@@ -136,12 +141,12 @@ public class ProbDecoder {
                 sumSyndro += syndrome[m];
             }
             if(sumSyndro == 0){
-                System.out.println("反復回数" + (l + 1) + "でパリティ検査通過");
+//                System.out.println("反復回数" + (l + 1) + "でパリティ検査通過");
                 return estimatedC;
             }
 
         }
-        System.out.println("最大反復回数" + maxL + "に到達しました。");
+//        System.out.println("最大反復回数" + maxL + "に到達しました。");
         return estimatedC;
     }
 }

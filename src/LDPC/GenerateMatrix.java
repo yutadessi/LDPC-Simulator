@@ -75,7 +75,7 @@ public class GenerateMatrix {
             }
             tempo.clear();
         }
-        Print.Matrix(HtI);
+//        Print.Matrix(HtI);
 
         //生成行列Gの抽出
         for(int i = 0;i < n - m;i++){
