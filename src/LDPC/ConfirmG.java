@@ -1,7 +1,9 @@
 package LDPC;
 
+import java.io.PrintWriter;
+
 public class ConfirmG {
-    public static void ConG(int[][] G,int[][] H){
+    public static void ConG(int[][] G,int[][] H,PrintWriter pw){
         int total[][] = new int[G.length][H.length];
         int parityCheck = 0;
         for(int i = 0;i < G.length;i++){
@@ -12,7 +14,7 @@ public class ConfirmG {
             }
         }
         System.out.print("G * Ht ");
-        Print.Matrix(total);
+        Print.Matrix(total,pw);
         for(int[] i  : total){
             for(int j : i){
                 parityCheck += j % 2;

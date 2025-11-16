@@ -37,6 +37,7 @@ public class GenerateMatrix {
         int m = n * wc / wr;
         int[][] HtI = new int[n][n + m];//拡大行列HtI
         int[][] G_Matrix = new int[n - m][n];//生成行列G
+
         //拡大行列作成
         for(int i = 0;i < n;i++){ //検査行列の転置
             for(int j = 0;j < m;j++){
@@ -75,7 +76,6 @@ public class GenerateMatrix {
             }
             tempo.clear();
         }
-//        Print.Matrix(HtI);
 
         //生成行列Gの抽出
         for(int i = 0;i < n - m;i++){

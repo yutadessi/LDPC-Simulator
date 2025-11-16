@@ -12,8 +12,6 @@ public class GenerateC {
         for(int i = 0;i < k.length;i++){
             k[i] = random.nextInt(2);
         }
-//        System.out.print("メッセージk ");
-//        Print.Array(k);
 
         //送信語cの作成
         for(int i = 0;i < encodedG[0].length;i++){
@@ -24,8 +22,6 @@ public class GenerateC {
         for(int i = 0;i < c.length;i++){
             c[i] %= 2;
         }
-//        System.out.print("送信語c ");
-//        Print.Array(c);
 
         return c;
     }

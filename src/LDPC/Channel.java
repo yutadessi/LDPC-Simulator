@@ -13,8 +13,6 @@ public class Channel {
                 r[i] = c[i];
             }
         }
-//        System.out.println("受信語r ");
-//        Print.Array(r);
         return r;
     }
     public static void CheckError (int[] c,int[] r,double e){

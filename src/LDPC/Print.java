@@ -1,22 +1,24 @@
 package LDPC;
 
+import java.io.PrintWriter;
+
 public class Print {
-    public static void Matrix(int[][] Mat){
-        System.out.println("Matrix [" + Mat.length + ", " + Mat[0].length + "]");
+    public static void Matrix(int[][] Mat, PrintWriter pw){
+        pw.println("Matrix [" + Mat.length + ", " + Mat[0].length + "]");
         for(int i = 0;i < Mat.length;i++){
             for(int j = 0;j < Mat[0].length;j++) {
-                System.out.print(Mat[i][j] + " ");
+                pw.print(Mat[i][j] + " ");
             }
-            System.out.println(" ");
+            pw.println(" ");
         }
-        System.out.println(" ");
+        pw.println(" ");
     }
 
-    public static void Array(int[] Array){
-        System.out.println("Array [" + Array.length + "]");
+    public static void Array(int[] Array,PrintWriter pw){
+        pw.println("Array [" + Array.length + "]");
         for(int i = 0;i < Array.length;i++){
-            System.out.print(Array[i] + " ");
+            pw.print(Array[i] + " ");
         }
-        System.out.println(" \n");
+        pw.println(" \n");
     }
 }
