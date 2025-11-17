@@ -1,10 +1,12 @@
 package LDPC;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import java.io.PrintWriter;
 
 public class ProbDecoder {
-    public static int[] decode(int[][] encodedH, int[] r, double e, int maxL) {
+    public static int[] decode(int[][] encodedH, int[] r, double e, int maxL,PrintWriter pw) {
 
         //各ノードサイズ
         int numC = encodedH.length;
@@ -73,9 +75,6 @@ public class ProbDecoder {
                     }
                     msgVtoC[j][i][0] = p0;
                     msgVtoC[j][i][1] = p1;
-//                    //----手計算用表示プログラム(後で削除)----
-//                    System.out.println("msg" + j +"," + i + ",0 :" + msgVtoC[j][i][0] + ",msg" + j +"," + i + ",1 :" + msgVtoC[j][i][1]);
-//                    //--------------ここまで--------------
                 }
             }
 
@@ -113,9 +112,6 @@ public class ProbDecoder {
                     }
                     msgCtoV[i][j][0] = sum0;
                     msgCtoV[i][j][1] = sum1;
-//                    //----手計算用表示プログラム(後で削除)----
-//                    System.out.println("msg" + i +"," + j + ",0 :" + msgCtoV[i][j][0] + ",msg" + i +"," + j + ",1 :" + msgCtoV[i][j][1]);
-//                    //--------------ここまで--------------
                 }
             }
 

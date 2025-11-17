@@ -12,7 +12,6 @@ public class TissueEncoder {
         //列ごとにガウスの消去法を適用
         for(int i = 0;i < enG.length;i++){
             int[] tempC = new int[enG.length];
-            int[] tempR;
             List<Integer> Row = new ArrayList<>();
             List<Integer> Col = new ArrayList<>();
             //列交換処理
