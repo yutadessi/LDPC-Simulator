@@ -8,7 +8,7 @@ import java.util.List;
 public class GenerateMatrix {
     //検査行列作成メソッド
     public static int[][] gallagerCheckMatrix(int n,int wr,int wc){
-        int m = n*wc/wr;//検査行列の行数
+        int m = n * wc / wr;//検査行列の行数
         int blockRows = n/wr;//部分行列の行数
         int[][] H_matrix = new int [m][n];
 

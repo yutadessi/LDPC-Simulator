@@ -94,13 +94,13 @@ public class ProbDecoder {
                 for(int j : connectedV){
                     int[] vNodes = new int[connectedV.size() - 1];
                     double sum0 = 0,sum1 = 0;
-                    for(int sigma = 0;sigma < Math.pow(2,vNodes.length);sigma++){
+                    long svmax = 1L << vNodes.length;
+                    for(int sigma = 0;sigma < svmax;sigma++){
                         double product = 1.0;
 
                         //Vi∈Ai\j
                         for(int countL = 0;countL < vNodes.length;countL++){
-                            vNodes[countL] =
-                                    (sigma % Math.pow(2,countL+1) < Math.pow(2,countL)) ? 0 : 1;
+                            vNodes[countL] = (int)((sigma >> countL) & 1);
                         }
 
                         //Π

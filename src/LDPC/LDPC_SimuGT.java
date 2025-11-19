@@ -74,7 +74,6 @@ public class LDPC_SimuGT {
                 double iber = (double)bitErrorCount/totalInfoBits;
                 pw.printf("%.2f \t\t| %.6f \t| %.8f\n", e, fer, iber);
             }
-            Print.DetailMatrix(encodedH,pw);//書き写す用
         } catch (IOException e) {
             e.printStackTrace();
         }
