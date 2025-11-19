@@ -6,7 +6,16 @@ import java.util.Arrays;
 import java.io.PrintWriter;
 
 public class ProbDecoder {
-    public static int[] decode(int[][] encodedH, int[] r, double e, int maxL,PrintWriter pw) {
+    public static class DecodingResult {
+        public final int[] decodedCodeword;
+        public final int iterationCount;
+
+        public DecodingResult(int[] decodedCodeword,int iterationCount){
+            this.decodedCodeword = decodedCodeword;
+            this.iterationCount = iterationCount;
+        }
+    }
+    public static DecodingResult decode(int[][] encodedH, int[] r, double e, int maxL,PrintWriter pw) {
 
         //各ノードサイズ
         int numC = encodedH.length;
@@ -138,11 +147,11 @@ public class ProbDecoder {
             }
             if(sumSyndro == 0){
 //                System.out.println("反復回数" + (l + 1) + "でパリティ検査通過");
-                return estimatedC;
+                return new DecodingResult(estimatedC,l + 1);
             }
 
         }
 //        System.out.println("最大反復回数" + maxL + "に到達しました。");
-        return estimatedC;
+        return new DecodingResult(estimatedC,maxL);
     }
 }

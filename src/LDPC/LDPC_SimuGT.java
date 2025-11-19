@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 public class LDPC_SimuGT {
     public static void main(String[] args) {
 
-        String fileNames = "result-001-01(1).txt";
+        String fileNames = "result-001-01().txt";
         try (PrintWriter pw = new PrintWriter(fileNames, StandardCharsets.UTF_8)){
 
             //符号パラメーター
@@ -20,13 +20,13 @@ public class LDPC_SimuGT {
             int maxL = 20; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 500;
+            int numFrames = 1;
 
             pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
 
             //通信路誤り率eの設定
-            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
-//            double[] eValues = {0.03};
+//            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
+            double[] eValues = {0.03};
 
             //検査行列Hと生成行列Gの作成
             int [][] H = GenerateMatrix.gallagerCheckMatrix(n,wr,wc);
@@ -53,7 +53,10 @@ public class LDPC_SimuGT {
                     int[] r = Channel.GenerateR(c,e);
 
                     //確率領域sum-product復号
-                    int[] estimatedC = ProbDecoder.decode(encodedH,r,e,maxL,pw);
+                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,e,maxL,pw);
+
+                    int[] estimatedC = result.decodedCodeword;
+                    int iterations = result.iterationCount;
 
                     //フレーム誤りカウント
                     if(!Arrays.equals(c,estimatedC)){
