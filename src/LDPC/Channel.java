@@ -15,11 +15,15 @@ public class Channel {
         }
         return r;
     }
-    public static void CheckError (int[] c,int[] r,double e){
-        double count = 0;
+    public static double CheckError(int[] c,int[] r){
+        int countCBE = 0;
         for(int i = 0;i < c.length;i++){
-            count += c[i] - r[i] != 0 ? 1 : 0;
+            if(c[i] != r[i]){
+                countCBE ++;
+            }
         }
-        System.out.println("通信路誤り率e = " + e + ",実際の通信路誤り率:" + (count / c.length));
+        double cBER = (double) countCBE/c.length;
+        return cBER;
     }
+
 }

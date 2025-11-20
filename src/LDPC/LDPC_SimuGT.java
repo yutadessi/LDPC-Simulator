@@ -25,7 +25,7 @@ public class LDPC_SimuGT {
             int maxL = 20; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 1;
+            int numFrames = 100;
 
             pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
 
@@ -35,7 +35,7 @@ public class LDPC_SimuGT {
 
             //検査行列Hと生成行列Gの作成
             int [][] H = GenerateMatrix.gallagerCheckMatrix(n,wr,wc);
-            int [][] G = GenerateMatrix.generatorMatrix(H,n,wr,wc);
+            int [][] G = GenerateMatrix.generatorMatrix(H);
 
             //検査行列を保存
             CheckMatrixIO.saveCheckMatrix(H,filePath);
@@ -51,6 +51,9 @@ public class LDPC_SimuGT {
                 long bitErrorCount = 0;
                 long totalInfoBits = 0;
                 int infoBitLength = encodedG.length;
+                long BECountPerFrame = 0;
+
+                pw.printf("%-10s | %-6s | %-10s | %-6s\n","C-BER","Frame","ErrorIBits","Iterations");
 
                 for(int frame = 0;frame < numFrames;frame++){
 
@@ -59,6 +62,8 @@ public class LDPC_SimuGT {
 
                     //受信語作成
                     int[] r = Channel.GenerateR(c,e);
+
+                    double cBER = Channel.CheckError(c,r);
 
                     //確率領域sum-product復号
                     ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,e,maxL,pw);
@@ -70,6 +75,7 @@ public class LDPC_SimuGT {
                     if(!Arrays.equals(c,estimatedC)){
                         frameErrorCount++;
                     }
+                    String frameError = frameErrorCount > 0 ? "True" : "False";
 
                     //情報ビット誤りカウント
                     totalInfoBits += infoBitLength;
@@ -77,6 +83,10 @@ public class LDPC_SimuGT {
                     for(int i = 0;i < infoBitLength;i++){
                         if(c[i] != estimatedC[i]) bitErrorCount++;
                     }
+                    pw.printf("%10.8f | %6s | %10s | %6s\n",cBER,frameError,(bitErrorCount - BECountPerFrame),iterations);
+                    BECountPerFrame = bitErrorCount;
+
+
                 }
                 double fer = (double)frameErrorCount/numFrames;
                 double iber = (double)bitErrorCount/totalInfoBits;

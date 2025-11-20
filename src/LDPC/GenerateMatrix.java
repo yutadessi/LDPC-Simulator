@@ -33,8 +33,9 @@ public class GenerateMatrix {
     }
 
     //生成行列作成
-    public static int[][] generatorMatrix(int[][] H,int n,int wr,int wc){
-        int m = n * wc / wr;
+    public static int[][] generatorMatrix(int[][] H){
+        int n = H[0].length;
+        int m = H.length;
         int[][] HtI = new int[n][n + m];//拡大行列HtI
         int[][] G_Matrix = new int[n - m][n];//生成行列G
 

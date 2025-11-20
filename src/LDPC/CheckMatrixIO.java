@@ -25,6 +25,29 @@ public class CheckMatrixIO {
 
     //検査行列を読み取り、復元するメソッド
     public static int[][] loadCheckMatrix(String filePath){
-        BufferedReader br = null;
+        try(Scanner scanner = new Scanner(new File(filePath))){
+
+            if(!scanner.hasNextInt()) return null;
+
+            int m = scanner.nextInt();
+            int n = scanner.nextInt();
+
+            int[][] H = new int[m][n];
+
+            while(scanner.hasNextInt()){
+                int r = scanner.nextInt();
+                if (scanner.hasNextInt()) {
+                    int c = scanner.nextInt();
+                    if(r < m && c < n){
+                        H[r][c] = 1;
+                    }
+                }
+            }
+
+            return H;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
