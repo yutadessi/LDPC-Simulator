@@ -10,7 +10,12 @@ import java.nio.charset.StandardCharsets;
 public class LDPC_SimuGT {
     public static void main(String[] args) {
 
-        String fileNames = "result-001-01().txt";
+        //ファイル名、毎回変える！！--------
+        String fileNAMEME = "No.1";
+        //------------------------------
+
+        String fileNames = fileNAMEME + "-result.txt";
+        String filePath = fileNAMEME + "-HMatrix.txt";
         try (PrintWriter pw = new PrintWriter(fileNames, StandardCharsets.UTF_8)){
 
             //符号パラメーター
@@ -31,6 +36,9 @@ public class LDPC_SimuGT {
             //検査行列Hと生成行列Gの作成
             int [][] H = GenerateMatrix.gallagerCheckMatrix(n,wr,wc);
             int [][] G = GenerateMatrix.generatorMatrix(H,n,wr,wc);
+
+            //検査行列を保存
+            CheckMatrixIO.saveCheckMatrix(H,filePath);
 
             //HとGを組織符号化
             List<Integer> columnIndicatesToSwap = new ArrayList<>();
