@@ -3,7 +3,6 @@ package LDPC;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
-import java.io.PrintWriter;
 
 public class ProbDecoder {
     public static class DecodingResult {
@@ -15,7 +14,7 @@ public class ProbDecoder {
             this.iterationCount = iterationCount;
         }
     }
-    public static DecodingResult decode(int[][] encodedH, int[] r, double e, int maxL,PrintWriter pw) {
+    public static DecodingResult decode(int[][] encodedH, int[] r, double e, int maxL) {
 
         //各ノードサイズ
         int numC = encodedH.length;
@@ -42,14 +41,13 @@ public class ProbDecoder {
         //尤度
         double[][] likelihoods = new double[numV][2];
         double p_correct = 1.0 - e;
-        double p_error = e;
 
         for (int j = 0; j < numV; j++) {
             if (r[j] == 0) {
                 likelihoods[j][0] = p_correct;
-                likelihoods[j][1] = p_error;
+                likelihoods[j][1] = e;
             } else {
-                likelihoods[j][0] = p_error;
+                likelihoods[j][0] = e;
                 likelihoods[j][1] = p_correct;
             }
         }
@@ -100,7 +98,7 @@ public class ProbDecoder {
 
                         //Vi∈Ai\j
                         for(int countL = 0;countL < vNodes.length;countL++){
-                            vNodes[countL] = (int)((sigma >> countL) & 1);
+                            vNodes[countL] = ((sigma >> countL) & 1);
                         }
 
                         //Π

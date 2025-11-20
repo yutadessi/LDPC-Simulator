@@ -75,7 +75,7 @@ public class LDPC_SimuGT {
                     double cBER = Channel.CheckError(c,r);
 
                     //確率領域sum-product復号
-                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,e,maxL,pw);
+                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,e,maxL);
 
                     int[] estimatedC = result.decodedCodeword;
                     int iterations = result.iterationCount;
