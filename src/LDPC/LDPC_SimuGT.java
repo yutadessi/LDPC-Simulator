@@ -11,7 +11,7 @@ public class LDPC_SimuGT {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "No.10";
+        String fileNAMEME = "No.";
         //------------------------------
 
         String fileNames = fileNAMEME + "-result.txt";
