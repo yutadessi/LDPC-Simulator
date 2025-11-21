@@ -7,38 +7,42 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class LDPC_SimuGT {
+public class LoadH {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "No.10";
+        String fileNAMEME = "No.3";
         //------------------------------
 
-        String fileNames = fileNAMEME + "-result.txt";
+        String fileNames = fileNAMEME + "-LoadHResult.txt";
         String filePath = fileNAMEME + "-HMatrix.txt";
         try (PrintWriter pw = new PrintWriter(fileNames, StandardCharsets.UTF_8)){
 
             //符号パラメーター
-            int n = 1024; //符号長
-            int wr = 8; //行重み,n % wr == 0
-            int wc = 4; //列重み
             int maxL = 20; //最大反復回数
 
             //シミュレーション設定
             int numFrames = 1000;
 
-            pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
-
             //通信路誤り率eの設定
-            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
-//            double[] eValues = {0.03,0.04};
+//            double [] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
+            double[] eValues = {0.03};
 
             //検査行列Hと生成行列Gの作成
-            int [][] H = GenerateMatrix.gallagerCheckMatrix(n,wr,wc);
+            int [][] H = CheckMatrixIO.loadCheckMatrix(filePath);
             int [][] G = GenerateMatrix.generatorMatrix(H);
 
-            //検査行列を保存
-            CheckMatrixIO.saveCheckMatrix(H,filePath);
+            int n = H[0].length;
+            int wr = 0;
+            for(int i = 0;i < n;i++){
+                if(H[0][i] == 0){
+                    wr = i;
+                    break;
+                }
+            }
+            int wc = (H.length * wr / n);
+
+            pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
 
             //HとGを組織符号化
             List<Integer> columnIndicatesToSwap = new ArrayList<>();
