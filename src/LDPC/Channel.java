@@ -6,8 +6,7 @@ public class Channel {
         int[] r = new int[c.length];
         Random random = new Random();
         for(int i = 0;i < r.length;i++){
-            int rand = random.nextInt(1000);
-            if(rand < e * 1000){
+            if(random.nextDouble() < e * 1000){
                 r[i] = c[i] == 1 ? 0 : 1;
             }else {
                 r[i] = c[i];
