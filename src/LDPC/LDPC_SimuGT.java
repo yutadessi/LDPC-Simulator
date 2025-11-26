@@ -25,13 +25,13 @@ public class LDPC_SimuGT {
             int maxL = 20; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 1000;
+            int numFrames = 100;
 
             pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
 
             //通信路誤り率eの設定
-            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
-//            double[] eValues = {0.03,0.04};
+//            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
+            double[] eValues = {0.03};
 
             //検査行列Hと生成行列Gの作成
             int [][] H = GenerateMatrix.gallagerCheckMatrix(n,wr,wc);
