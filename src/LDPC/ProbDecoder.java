@@ -5,15 +5,7 @@ import java.util.List;
 import java.util.Arrays;
 
 public class ProbDecoder {
-    public static class DecodingResult {
-        public final int[] decodedCodeword;
-        public final int iterationCount;
-
-        public DecodingResult(int[] decodedCodeword,int iterationCount){
-            this.decodedCodeword = decodedCodeword;
-            this.iterationCount = iterationCount;
-        }
-    }
+    public record DecodingResult(int[] decodedCodeword, int iterationCount){}
     public static DecodingResult decode(int[][] encodedH, int[] r, double e, int maxL) {
 
         //各ノードサイズ
