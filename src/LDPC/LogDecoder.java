@@ -7,8 +7,9 @@ public class LogDecoder {
 
     //逆ハイパボリックタンジェント
     public static double atanh(double x){
-        return 0.5 * Math.log( ( 1 + x ) / ( 1 - x ) );
+        return 0.5 * Math.log( ( 1.0 + x ) / ( 1.0 - x ) );
     }
+
 
     //レコード
     public record DecodeResult (int[] decodedCode, int iterationCount){}
@@ -56,6 +57,38 @@ public class LogDecoder {
             for(int j = 0;j < numV;j++){
                 List<Integer> connectedC = B.get(j);
                 for(int i : connectedC){
+                    double product = lamda[j];//λ(j)
+
+                    for(int k : connectedC){//+ Σα
+                        if(k == i) continue;
+                        product += alpha[k][j];
+                    }
+
+                    beta[j][i] = product;//代入
+                }
+            }
+
+            //チェックノード処理
+            for(int i = 0;i < numC;i++){
+                List<Integer> connectedV = A.get(i);
+
+                for(int j : connectedV){
+                    double product = 1.0;
+
+                    for(int k : connectedV){//Πtanh(0.5*β)
+                        if(k == j) continue;
+                        product *= Math.tanh(0.5 * beta[k][i]);
+                    }
+
+                    alpha[i][j] = 2 * atanh(product);// 2tanh^-1
+                }
+            }
+
+            //一時推定ビットの決定
+            double[] gamma = new double[numV];
+            for(int j = 0;j < numV;j++){
+                gamma[j] = lamda[j];
+                for(int k : B.get(j)){
 
                 }
             }
