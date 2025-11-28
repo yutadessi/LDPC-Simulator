@@ -12,7 +12,7 @@ public class LogDecoder {
 
 
     //レコード
-    public record DecodeResult (int[] decodedCode, int iterationCount){}
+    public record DecodeResult (int[] decodedCode, int iterationNum){}
 
     public static DecodeResult decode (int[][] encodedH, int[] r, double e, int maxL){
 
@@ -49,6 +49,9 @@ public class LogDecoder {
          //対数領域メッセージα,β
         double[][] alpha = new double[numC][numV];
         double[][] beta = new double[numV][numC];
+
+        //推定語
+        int[] estimatedCode = new int[numV];
 
         //基本処理
         for(int l = 0;l < maxL;l++){
@@ -89,12 +92,27 @@ public class LogDecoder {
             for(int j = 0;j < numV;j++){
                 gamma[j] = lamda[j];
                 for(int k : B.get(j)){
-
+                    gamma[j] += alpha[k][j];
                 }
+                estimatedCode[j] = (gamma[j] < 0)? 1 : 0;
+            }
+
+            //パリティ検査
+            int sumSyndro = 0;
+            int[] syndrome = new int[encodedH.length];
+            for(int m = 0;m < encodedH.length;m++){
+                for(int n = 0;n < encodedH[0].length;n++){
+                    syndrome[m] += encodedH[m][n] * estimatedCode[n];
+                }
+                syndrome[m] %= 2;
+                sumSyndro += syndrome[m];
+            }
+            if(sumSyndro == 0){
+                return new DecodeResult(estimatedCode,l + 1);
             }
         }
 
-
+        return new DecodeResult(estimatedCode,maxL);
     }
 
 }

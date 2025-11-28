@@ -7,11 +7,11 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class LDPC_SimuGT {
+public class LDPC_ProbSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "No.";
+        String fileNAMEME = "No";
         //------------------------------
 
         String fileNames = fileNAMEME + "-result.txt";
@@ -31,7 +31,7 @@ public class LDPC_SimuGT {
 
             //通信路誤り率eの設定
 //            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
-            double[] eValues = {0.03};
+            double[] eValues = {0.05};
 
             //検査行列Hと生成行列Gの作成
             int [][] H = GenerateMatrix.gallagerCheckMatrix(n,wr,wc);
@@ -53,6 +53,7 @@ public class LDPC_SimuGT {
 
             pw.printf("%8s | %13s | %12s\n","E","FER","IBER");
 
+            //毎f表示用インデックス
             int num = 0;
 
             //復号
