@@ -7,11 +7,11 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class LoadH {
+public class LoadH_Log {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "No.3";
+        String fileNAMEME = "Log-No.1";
         //------------------------------
 
         String fileNames = fileNAMEME + "-LoadHResult.txt";
@@ -19,14 +19,14 @@ public class LoadH {
         try (PrintWriter pw = new PrintWriter(fileNames, StandardCharsets.UTF_8)){
 
             //符号パラメーター
-            int maxL = 20; //最大反復回数
+            int maxL = 50; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 1000;
+            int numFrames = 10000;
 
             //通信路誤り率eの設定
-//            double [] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
-            double[] eValues = {0.03};
+            double [] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
+//            double[] eValues = {0.03};
 
             //検査行列Hと生成行列Gの作成
             int [][] H = CheckMatrixIO.loadCheckMatrix(filePath);
@@ -42,7 +42,7 @@ public class LoadH {
             }
             int wc = (H.length * wr / n);
 
-            pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
+            pw.println("n = " + n + ",wr = " + wr + ",wc = " + wc + ",maxL = " + maxL + ",numFrames = " + numFrames);
 
             //HとGを組織符号化
             List<Integer> columnIndicatesToSwap = new ArrayList<>();
@@ -79,10 +79,10 @@ public class LoadH {
                     double cBER = Channel.CheckError(c,r);
 
                     //確率領域sum-product復号
-                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,e,maxL);
+                    LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,e,maxL);
 
-                    int[] estimatedC = result.decodedCodeword();
-                    int iterations = result.iterationCount();
+                    int[] estimatedC = result.decodedCode();
+                    int iterations = result.iterationNum();
 
                     //フレーム誤りカウント
                     if(!Arrays.equals(c,estimatedC)){

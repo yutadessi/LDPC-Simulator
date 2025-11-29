@@ -7,42 +7,42 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):18分
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):  分
-
-public class LDPC_LogSimu {
+public class LoadH_Prob {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Log-No.1(lmax=100)";
+        String fileNAMEME = "No.3";
         //------------------------------
 
-        String fileNames = fileNAMEME + "-result.txt";
+        String fileNames = fileNAMEME + "-LoadHResult.txt";
         String filePath = fileNAMEME + "-HMatrix.txt";
         try (PrintWriter pw = new PrintWriter(fileNames, StandardCharsets.UTF_8)){
 
             //符号パラメーター
-            int n = 1024; //符号長
-            int wr = 8; //行重み,n % wr == 0
-            int wc = 4; //列重み
-            int maxL = 100; //最大反復回数
+            int maxL = 20; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 10000;
-
-            pw.println("n = " + n + ",wr = " + wr + ",wc = " + wc + ",maxL = " + maxL + ",numFrames = " + numFrames);
+            int numFrames = 1000;
 
             //通信路誤り率eの設定
-            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
-//            double[] eValues = {0.05};
+//            double [] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
+            double[] eValues = {0.03};
 
             //検査行列Hと生成行列Gの作成
-            int [][] H = GenerateMatrix.gallagerCheckMatrix(n,wr,wc);
+            int [][] H = CheckMatrixIO.loadCheckMatrix(filePath);
             int [][] G = GenerateMatrix.generatorMatrix(H);
 
-            //検査行列を保存
-            CheckMatrixIO.saveCheckMatrix(H,filePath);
+            int n = H[0].length;
+            int wr = 0;
+            for(int i = 0;i < n;i++){
+                if(H[0][i] == 0){
+                    wr = i;
+                    break;
+                }
+            }
+            int wc = (H.length * wr / n);
+
+            pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
 
             //HとGを組織符号化
             List<Integer> columnIndicatesToSwap = new ArrayList<>();
@@ -78,11 +78,11 @@ public class LDPC_LogSimu {
 
                     double cBER = Channel.CheckError(c,r);
 
-                    //対数領域sum-product復号
-                    LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,e,maxL);
+                    //確率領域sum-product復号
+                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,e,maxL);
 
-                    int[] estimatedC = result.decodedCode();
-                    int iterations = result.iterationNum();
+                    int[] estimatedC = result.decodedCodeword();
+                    int iterations = result.iterationCount();
 
                     //フレーム誤りカウント
                     if(!Arrays.equals(c,estimatedC)){
