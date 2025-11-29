@@ -11,7 +11,7 @@ public class LDPC_LogSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "No.";
+        String fileNAMEME = "Log-No.1";
         //------------------------------
 
         String fileNames = fileNAMEME + "-result.txt";
@@ -25,13 +25,13 @@ public class LDPC_LogSimu {
             int maxL = 20; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 100;
+            int numFrames = 10000;
 
             pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
 
             //通信路誤り率eの設定
-//            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
-            double[] eValues = {0.03};
+            double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
+//            double[] eValues = {0.05};
 
             //検査行列Hと生成行列Gの作成
             int [][] H = GenerateMatrix.gallagerCheckMatrix(n,wr,wc);
@@ -74,7 +74,7 @@ public class LDPC_LogSimu {
 
                     double cBER = Channel.CheckError(c,r);
 
-                    //確率領域sum-product復号
+                    //対数領域sum-product復号
                     LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,e,maxL);
 
                     int[] estimatedC = result.decodedCode();
