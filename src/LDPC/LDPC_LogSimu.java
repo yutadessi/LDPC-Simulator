@@ -7,11 +7,13 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+
+//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10):18分
 public class LDPC_LogSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Log-No.1";
+        String fileNAMEME = "Log-No.2";
         //------------------------------
 
         String fileNames = fileNAMEME + "-result.txt";
@@ -27,7 +29,7 @@ public class LDPC_LogSimu {
             //シミュレーション設定
             int numFrames = 10000;
 
-            pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
+            pw.println("n = " + n + ",wr = " + wr + ",wc = " + wc + ",maxL = " + maxL + ",numFrames = " + numFrames);
 
             //通信路誤り率eの設定
             double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
