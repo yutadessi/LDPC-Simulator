@@ -25,7 +25,7 @@ public class LDPC_ProbSimu {
             int maxL = 20; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 100;
+            int numFrames = 10000;
 
             pw.println("n=" + n + ",wr=" + wr + ",wc=" + wc + ",maxL=" + maxL);
 
