@@ -11,7 +11,7 @@ public class LoadH_Log {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Log-No.1";
+        String fileNAMEME = "Log-No.2";
         //------------------------------
 
         String fileNames = fileNAMEME + "-LoadHResult.txt";
