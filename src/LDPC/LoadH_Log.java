@@ -8,13 +8,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 //処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):約18分
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):約30分
+//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):約32分
 
 public class LoadH_Log {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Log-No.6";
+        String fileNAMEME = "Log-No.7";
         //------------------------------
 
         String fileNames = fileNAMEME + "-LoadHResult.txt";
