@@ -5,12 +5,6 @@ import java.util.List;
 
 public class MinSumDecoder {
 
-    //逆ハイパボリックタンジェント
-    public static double atanh(double x){
-        return 0.5 * Math.log( ( 1.0 + x ) / ( 1.0 - x ) );
-    }
-
-
     //レコード
     public record DecodeResult (int[] decodedCode, int iterationNum){}
 
