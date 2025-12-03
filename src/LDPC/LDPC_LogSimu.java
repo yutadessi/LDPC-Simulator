@@ -15,18 +15,18 @@ public class LDPC_LogSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Log-No.1(lmax=100)";
+        String fileNAMEME = "Log-8-3";
         //------------------------------
 
-        String fileNames = fileNAMEME + "-result.txt";
+        String fileNames = fileNAMEME + "-result.csv";
         String filePath = fileNAMEME + "-HMatrix.txt";
         try (PrintWriter pw = new PrintWriter(fileNames, StandardCharsets.UTF_8)){
 
             //符号パラメーター
             int n = 1024; //符号長
             int wr = 8; //行重み,n % wr == 0
-            int wc = 4; //列重み
-            int maxL = 100; //最大反復回数
+            int wc = 3; //列重み
+            int maxL = 50; //最大反復回数
 
             //シミュレーション設定
             int numFrames = 10000;
@@ -52,21 +52,24 @@ public class LDPC_LogSimu {
             //フレーム毎の表示達
             double[][] groupOfCBER = new double[eValues.length][numFrames];
             String[][] groupOfFrame = new String[eValues.length][numFrames];
-            long[][] groupOfErroIBits = new long[eValues.length][numFrames];
+            long[][] groupOfErrorInfoBits = new long[eValues.length][numFrames];
             int[][] groupOfIterations = new int[eValues.length][numFrames];
 
-            pw.printf("%8s | %13s | %12s\n","E","FER","IBER");
+            pw.printf("%s,%13s | %12s\n","E","FER","IBER");
 
             int num = 0;
 
             //復号
             for(double e : eValues){
                 long frameErrorCount = 0;
-                long frameErrorCountPerFrame = 0;
+                long frameErrorCountPreviousTotal = 0;
                 long bitErrorCount = 0;
                 long totalInfoBits = 0;
                 int infoBitLength = encodedG.length;
                 long BECountPerFrame = 0;
+
+                double aveCBER = 0; //各通信路誤り率での実際の通信路誤り率の平均
+                double sumCBER = 0; //各誤り率の実際の通信路誤り率の合計
 
                 for(int frame = 0;frame < numFrames;frame++){
 
@@ -88,7 +91,7 @@ public class LDPC_LogSimu {
                     if(!Arrays.equals(c,estimatedC)){
                         frameErrorCount++;
                     }
-                    String frameError = (frameErrorCount-frameErrorCountPerFrame) > 0 ? "False" : "True";
+                    String frameError = (frameErrorCount-frameErrorCountPreviousTotal) > 0 ? "False" : "True";
 
                     //情報ビット誤りカウント
                     totalInfoBits += infoBitLength;
@@ -98,23 +101,31 @@ public class LDPC_LogSimu {
                     }
                     groupOfCBER[num][frame] = cBER;
                     groupOfFrame[num][frame] = frameError;
-                    groupOfErroIBits[num][frame] = (bitErrorCount - BECountPerFrame);
+                    groupOfErrorInfoBits[num][frame] = (bitErrorCount - BECountPerFrame);
                     groupOfIterations[num][frame] = iterations;
 
-                    frameErrorCountPerFrame = frameErrorCount;
+                    frameErrorCountPreviousTotal = frameErrorCount;
                     BECountPerFrame = bitErrorCount;
+
+                    sumCBER += cBER;
+
                 }
                 double fer = (double)frameErrorCount/numFrames;
                 double iber = (double)bitErrorCount/totalInfoBits;
-                pw.printf("%6.2f | %10.6f | %12.8f\n", e, fer, iber);
+
+                aveCBER = sumCBER / numFrames;
+
+                pw.printf("%.2f,%s,%.4f,%.8f\n", e, aveCBER, fer, iber);
                 num++;
             }
 
+            pw.println(" ");
+
             //各フレームの情報表示
-            pw.printf("%-13s | %-5s | %-10s | %-6s\n","C-BER","Frame","ErrorIBits","Iterations");
+            pw.printf("%s,%s%,%s,%s\n","C-BER","Frame","ErrorIBits","Iterations");
             for(int i = 0;i < eValues.length;i++){
                 for(int j = 0;j < numFrames;j++){
-                    pw.printf("%10.8f | %6s | %12d | %6d\n",groupOfCBER[i][j],groupOfFrame[i][j],groupOfErroIBits[i][j],groupOfIterations[i][j]);
+                    pw.printf("%s,%s,%s,%s\n",groupOfCBER[i][j],groupOfFrame[i][j],groupOfErrorInfoBits[i][j],groupOfIterations[i][j]);
                 }
             }
 
