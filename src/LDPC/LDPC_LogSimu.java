@@ -15,7 +15,7 @@ public class LDPC_LogSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Trial";
+        String fileNAMEME = "New8-3";
         //------------------------------
 
         String fileNames = fileNAMEME + "-result.csv";
@@ -29,7 +29,7 @@ public class LDPC_LogSimu {
             int maxL = 50; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 10;
+            int numFrames = 10000;
 
             pw.printf("%s,%s,%s,%s,%s\n","符号長","行重み","列重み","最大反復回数","フレーム数");
             pw.printf("%s,%s,%s,%s,%s\n\n",n,wr,wc,maxL,numFrames);
@@ -56,7 +56,7 @@ public class LDPC_LogSimu {
             long[][] groupOfErrorInfoBits = new long[eValues.length][numFrames];
             int[][] groupOfIterations = new int[eValues.length][numFrames];
 
-            pw.printf("%s,%s,%s,%s,%s,%s\n","通信路誤り率","実際の通信路誤り率の平均","FER","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数");
+            pw.printf("%s,%s,%s,%s,%s,%s,%s\n","通信路誤り率","実際の通信路誤り率の平均","FER","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット数");
 
             int num = 0;
 
@@ -69,6 +69,7 @@ public class LDPC_LogSimu {
                 int infoBitLength = encodedG.length;
                 long BECountPerFrame = 0;
 
+                //正誤毎の平均繰り返し回数
                 double aveTrueIterations;
                 double aveFalseIterations;
                 int[] sumTrueIterations = new int[2];
@@ -78,33 +79,42 @@ public class LDPC_LogSimu {
                 double aveCBER;
                 double sumCBER = 0;
 
+                //誤訂正ビット数の合計と平均
+                double aveMissCorrection;
+                int sumMissCorrection = 0;
+
                 for(int frame = 0;frame < numFrames;frame++){
 
-                    //メッセージと送信語の作成
+                    //メッセージと送信語、受信語の作成
                     int[] c = GenerateC.geneC(encodedG);
-
-                    //受信語作成
                     int[] r = Channel.GenerateR(c,e);
 
+                    //非誤りビットのインデックス取得
+                    List<Integer> noErrorBitIndex = new ArrayList<>();
+                    for(int i = 0;i < encodedG.length;i++){
+                        if(c[i] == r[i]) noErrorBitIndex.add(i);
+                    }
+
+                    //実際の通信路での誤り率の取得
                     double cBER = Channel.CheckError(c,r);
 
-                    //対数領域sum-product復号
+                    //対数領域sum-product復号&Min-Sum復号法
                     LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,e,maxL);
+//                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,e,maxL);
 
-                    int[] estimatedC = result.decodedCode();
+                    int[] decodedC = result.decodedCode();
                     int iterations = result.iterationNum();
 
                     //フレーム誤りカウント
-                    if(!Arrays.equals(c,estimatedC)){
+                    if(!Arrays.equals(c,decodedC)){
                         frameErrorCount++;
                     }
                     String frameError = (frameErrorCount-frameErrorCountPreviousTotal) > 0 ? "False" : "True";
 
                     //情報ビット誤りカウント
                     totalInfoBits += infoBitLength;
-
                     for(int i = 0;i < infoBitLength;i++){
-                        if(c[i] != estimatedC[i]) bitErrorCount++;
+                        if(c[i] != decodedC[i]) bitErrorCount++;
                     }
                     groupOfCBER[num][frame] = cBER;
                     groupOfFrame[num][frame] = frameError;
@@ -113,6 +123,11 @@ public class LDPC_LogSimu {
 
                     frameErrorCountPreviousTotal = frameErrorCount;
                     BECountPerFrame = bitErrorCount;
+
+                    //非誤りビットの反転数
+                    for(int i : noErrorBitIndex){
+                        if(r[i] != decodedC[i])sumMissCorrection++;
+                    }
 
                     //実際の誤り率の合計
                     sumCBER += cBER;
@@ -130,11 +145,13 @@ public class LDPC_LogSimu {
                 double fer = (double)frameErrorCount/numFrames;
                 double iber = (double)bitErrorCount/totalInfoBits;
 
+                aveMissCorrection = (double)sumMissCorrection/numFrames;
+
                 aveCBER = sumCBER / numFrames;
                 aveTrueIterations = (double)sumTrueIterations[0] / sumTrueIterations[1];
                 aveFalseIterations = (double)sumFalseIterations[0] / sumFalseIterations[1];
 
-                pw.printf("%.2f,%s,%.4f,%s,%s,%s\n", e, aveCBER, fer, iber,aveTrueIterations,aveFalseIterations);
+                pw.printf("%.2f,%s,%.4f,%s,%s,%s,%s\n", e, aveCBER, fer, iber,aveTrueIterations,aveFalseIterations,aveMissCorrection);
                 num++;
             }
 
