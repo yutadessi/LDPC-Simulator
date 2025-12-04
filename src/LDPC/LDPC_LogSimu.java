@@ -31,7 +31,8 @@ public class LDPC_LogSimu {
             //シミュレーション設定
             int numFrames = 10;
 
-            pw.printf("%s,%s,%s,%s,%s\n",n,wr,wc,maxL,numFrames);
+            pw.printf("%s,%s,%s,%s,%s\n","符号長","行重み","列重み","最大反復回数","フレーム数");
+            pw.printf("%s,%s,%s,%s,%s\n\n",n,wr,wc,maxL,numFrames);
 
             //通信路誤り率eの設定
             double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
@@ -137,10 +138,8 @@ public class LDPC_LogSimu {
                 num++;
             }
 
-            pw.println(" ");
-
             //各フレームの情報表示
-            pw.printf("%s,%s,%s,%s\n","C-BER","Frame","ErrorIBits","Iterations");
+            pw.printf("\n%s,%s,%s,%s\n","C-BER","Frame","ErrorIBits","Iterations");
             for(int i = 0;i < eValues.length;i++){
                 for(int j = 0;j < numFrames;j++){
                     pw.printf("%s,%s,%s,%s\n",groupOfCBER[i][j],groupOfFrame[i][j],groupOfErrorInfoBits[i][j],groupOfIterations[i][j]);
