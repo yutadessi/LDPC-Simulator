@@ -7,15 +7,15 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-
+//--------------------デスクトップPCでの処理速度--------------------
 //処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):18分
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):  分
+//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):31分
 
 public class LDPC_LogSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Log-8-3";
+        String fileNAMEME = "Trial";
         //------------------------------
 
         String fileNames = fileNAMEME + "-result.csv";
@@ -29,9 +29,9 @@ public class LDPC_LogSimu {
             int maxL = 50; //最大反復回数
 
             //シミュレーション設定
-            int numFrames = 10000;
+            int numFrames = 10;
 
-            pw.println("n = " + n + ",wr = " + wr + ",wc = " + wc + ",maxL = " + maxL + ",numFrames = " + numFrames);
+            pw.printf("%s,%s,%s,%s,%s\n",n,wr,wc,maxL,numFrames);
 
             //通信路誤り率eの設定
             double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
@@ -45,7 +45,7 @@ public class LDPC_LogSimu {
             CheckMatrixIO.saveCheckMatrix(H,filePath);
 
             //HとGを組織符号化
-            List<Integer> columnIndicatesToSwap = new ArrayList<>();
+            List<Integer> columnIndicatesToSwap = new ArrayList<>();  //組織符号化用インデックス
             int[][] encodedG = TissueEncoder.EncodeG(G,columnIndicatesToSwap);
             int[][] encodedH = TissueEncoder.EncodeH(H,columnIndicatesToSwap);
 
@@ -55,21 +55,27 @@ public class LDPC_LogSimu {
             long[][] groupOfErrorInfoBits = new long[eValues.length][numFrames];
             int[][] groupOfIterations = new int[eValues.length][numFrames];
 
-            pw.printf("%s,%13s | %12s\n","E","FER","IBER");
+            pw.printf("%s,%s,%s,%s,%s,%s\n","通信路誤り率","実際の通信路誤り率の平均","FER","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数");
 
             int num = 0;
 
             //復号
             for(double e : eValues){
-                long frameErrorCount = 0;
-                long frameErrorCountPreviousTotal = 0;
-                long bitErrorCount = 0;
+                long frameErrorCount = 0; //フレーム誤り数合計
+                long frameErrorCountPreviousTotal = 0; //前フレームまでのフレーム誤り数合計
+                long bitErrorCount = 0; //ビットエラー
                 long totalInfoBits = 0;
                 int infoBitLength = encodedG.length;
                 long BECountPerFrame = 0;
 
-                double aveCBER = 0; //各通信路誤り率での実際の通信路誤り率の平均
-                double sumCBER = 0; //各誤り率の実際の通信路誤り率の合計
+                double aveTrueIterations = 0;
+                double aveFalseIterations = 0;
+                int[] sumTrueIterations = new int[2];
+                int[] sumFalseIterations = new int[2];
+
+                //各誤り率での実際の通信路誤り率の合計と平均
+                double aveCBER;
+                double sumCBER = 0;
 
                 for(int frame = 0;frame < numFrames;frame++){
 
@@ -107,22 +113,34 @@ public class LDPC_LogSimu {
                     frameErrorCountPreviousTotal = frameErrorCount;
                     BECountPerFrame = bitErrorCount;
 
+                    //実際の誤り率の合計
                     sumCBER += cBER;
+
+                    //正誤毎の平均繰り返し回数
+                    if(frameError == "True"){
+                        sumTrueIterations[0] += iterations;
+                        sumTrueIterations[1] ++;
+                    }else{
+                        sumFalseIterations[0] += iterations;
+                        sumFalseIterations[1] ++;
+                    }
 
                 }
                 double fer = (double)frameErrorCount/numFrames;
                 double iber = (double)bitErrorCount/totalInfoBits;
 
                 aveCBER = sumCBER / numFrames;
+                aveTrueIterations = (double)sumTrueIterations[0] / sumTrueIterations[1];
+                aveFalseIterations = (double)sumFalseIterations[0] / sumFalseIterations[1];
 
-                pw.printf("%.2f,%s,%.4f,%.8f\n", e, aveCBER, fer, iber);
+                pw.printf("%.2f,%s,%.4f,%s,%s,%s\n", e, aveCBER, fer, iber,aveTrueIterations,aveFalseIterations);
                 num++;
             }
 
             pw.println(" ");
 
             //各フレームの情報表示
-            pw.printf("%s,%s%,%s,%s\n","C-BER","Frame","ErrorIBits","Iterations");
+            pw.printf("%s,%s,%s,%s\n","C-BER","Frame","ErrorIBits","Iterations");
             for(int i = 0;i < eValues.length;i++){
                 for(int j = 0;j < numFrames;j++){
                     pw.printf("%s,%s,%s,%s\n",groupOfCBER[i][j],groupOfFrame[i][j],groupOfErrorInfoBits[i][j],groupOfIterations[i][j]);
