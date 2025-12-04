@@ -39,11 +39,11 @@ public class LogDecoder {
         }
 
          //対数尤度比λ
-        double[] lamda = new double[r.length];
+        double[] lambda = new double[r.length];
         double l0 = Math.log((1 - e) / e);
 
         for(int j = 0;j < r.length;j++){
-            lamda[j] = (r[j] == 0) ? l0 : -l0;
+            lambda[j] = (r[j] == 0) ? l0 : -l0;
         }
 
          //対数領域メッセージα,β
@@ -60,7 +60,7 @@ public class LogDecoder {
             for(int j = 0;j < numV;j++){
                 List<Integer> connectedC = B.get(j);
                 for(int i : connectedC){
-                    double product = lamda[j];//λ(j)
+                    double product = lambda[j];//λ(j)
 
                     for(int k : connectedC){//+ Σα
                         if(k == i) continue;
@@ -90,7 +90,7 @@ public class LogDecoder {
             //一時推定ビットの決定
             double[] gamma = new double[numV];
             for(int j = 0;j < numV;j++){
-                gamma[j] = lamda[j];
+                gamma[j] = lambda[j];
                 for(int k : B.get(j)){
                     gamma[j] += alpha[k][j];
                 }

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.io.PrintWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 //--------------------デスクトップPCでの処理速度--------------------
 //処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):18分
@@ -20,7 +20,7 @@ public class LDPC_LogSimu {
 
         String fileNames = fileNAMEME + "-result.csv";
         String filePath = fileNAMEME + "-HMatrix.txt";
-        try (PrintWriter pw = new PrintWriter(fileNames, StandardCharsets.UTF_8)){
+        try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
 
             //符号パラメーター
             int n = 1024; //符号長
@@ -68,8 +68,8 @@ public class LDPC_LogSimu {
                 int infoBitLength = encodedG.length;
                 long BECountPerFrame = 0;
 
-                double aveTrueIterations = 0;
-                double aveFalseIterations = 0;
+                double aveTrueIterations;
+                double aveFalseIterations;
                 int[] sumTrueIterations = new int[2];
                 int[] sumFalseIterations = new int[2];
 
