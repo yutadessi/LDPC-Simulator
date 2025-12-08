@@ -32,7 +32,7 @@ public class LDPC_LogSimu {
 //            double[] e = {0.05};
 
         //出力用保存配列-各誤り率のデータ
-        double[][][] channelBitErrorRate = new double[wc.length][eValues.length][numFrames]; //各フレームの実際の通信路誤り率
+        double[][][] actualChannelBitErrorRate = new double[wc.length][eValues.length][numFrames]; //各フレームの実際の通信路誤り率
         double[][] sumChannelBitError = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の合計
         double[][] aveChannelBitErrorRate = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の平均
         double[][] varianceChannelBitError = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の分散
@@ -72,7 +72,7 @@ public class LDPC_LogSimu {
                     int[] r = Channel.GenerateR(c,eValues[errorRate]);
 
                     //実際の通信路での誤り率の取得
-                    channelBitErrorRate[column][errorRate][frame] = Channel.CheckError(c,r);
+                    actualChannelBitErrorRate[column][errorRate][frame] = Channel.CheckError(c,r);
 
                     //情報ビットの非誤りビットのインデックス
                     List<Integer> noErrorBitIndex = new ArrayList<>();
@@ -113,7 +113,7 @@ public class LDPC_LogSimu {
                     }
 
                     //実際の誤り率の加算
-                    sumChannelBitError[column][errorRate] += channelBitErrorRate[column][errorRate][frame];
+                    sumChannelBitError[column][errorRate] += actualChannelBitErrorRate[column][errorRate][frame];
                 }
                 //正誤毎の反復回数の平均
                 averageTrueIterations[column][errorRate] = (double)trueInfo[0]/ trueInfo[1];
@@ -134,7 +134,7 @@ public class LDPC_LogSimu {
         for(int i = 0;i < wc.length;i++){
             for(int j = 0;j < eValues.length;j++){
                 for(int k = 0;k < numFrames;k++){
-                    varianceChannelBitError[i][j] += Math.pow((channelBitErrorRate[i][j][k] - aveChannelBitErrorRate[i][j]),2);
+                    varianceChannelBitError[i][j] += Math.pow((actualChannelBitErrorRate[i][j][k] - aveChannelBitErrorRate[i][j]),2);
                 }
                 varianceChannelBitError[i][j] /= numFrames;
             }
