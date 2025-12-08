@@ -36,11 +36,12 @@ public class LDPC_LogSimu {
         double[][] sumChannelBitError = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の合計
         double[][] aveChannelBitErrorRate = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の平均
         double[][] varianceChannelBitError = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の分散
-        double[][] frameErrorRate = new double[wc.length][eValues.length]; //各通信路誤り率のFER
+        double[][] frameErrorRate = new double[wc.length][eValues.length]; //FER(Frame Error Rate)
+        double[][] infoBitErrorRate = new double[wc.length][eValues.length]; //IBER(Info Bit Error Rate)
         double[][] averageTrueIterations = new double[wc.length][eValues.length]; //訂正成功時の平均繰り返し回数
         double[][] averageFalseIterations = new double[wc.length][eValues.length]; //訂正失敗時の平均繰り返し回数
-        double[][] residualsErrorBits = new double[wc.length][eValues.length]; //情報ビットの残留誤りビット数
-        double[][] errorCorrectionBits = new double[wc.length][eValues.length]; //情報ビットの誤訂正ビット数
+        int[][] residualsErrorBits = new int[wc.length][eValues.length]; //情報ビットの残留誤りビット数
+        int[][] errorCorrectionBits = new int[wc.length][eValues.length]; //情報ビットの誤訂正ビット数
         double[][][] iterationDistribution = new double[wc.length][eValues.length][maxL]; //反復回数の度数分布
 
         //各列重みでのシミュレーション実行
@@ -79,8 +80,10 @@ public class LDPC_LogSimu {
                         if(c[i] == r[i])noErrorBitIndex.add(i);
                     }
 
-                    //対数領域sum-product復号
+                    //対数領域sum-product復号,確率領域sum-product復号法,Min-Sum復号法
                     LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,eValues[errorRate],maxL);
+//                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[errorRate],maxL);
+//                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[errorRate],maxL);
 
                     //復号後と反復回数の取得
                     int[] decodedC = result.decodedCode();
@@ -118,6 +121,9 @@ public class LDPC_LogSimu {
 
                 //FER
                 frameErrorRate[column][errorRate] = (double)falseInfo[1]/numFrames;
+
+                //IBER
+                infoBitErrorRate[column][errorRate] = (double)residualsErrorBits[column][errorRate] / (g.length * numFrames);
 
                 //実際の誤り率の平均
                 aveChannelBitErrorRate[column][errorRate] = sumChannelBitError[column][errorRate]/numFrames;

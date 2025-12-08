@@ -78,8 +78,8 @@ public class LDPC_ProbSimu {
                     //確率領域sum-product復号
                     ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,e,maxL);
 
-                    int[] estimatedC = result.decodedCodeword();
-                    int iterations = result.iterationCount();
+                    int[] estimatedC = result.decodedCode();
+                    int iterations = result.iterationNum();
 
                     //フレーム誤りカウント
                     if(!Arrays.equals(c,estimatedC)){

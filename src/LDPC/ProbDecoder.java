@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Arrays;
 
 public class ProbDecoder {
-    public record DecodingResult(int[] decodedCodeword, int iterationCount){}
+    public record DecodingResult(int[] decodedCode, int iterationNum){}
     public static DecodingResult decode(int[][] encodedH, int[] r, double e, int maxL) {
 
         //各ノードサイズ
