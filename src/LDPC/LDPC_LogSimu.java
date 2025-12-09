@@ -24,14 +24,15 @@ public class LDPC_LogSimu {
         int wr = 8; //行重み(n % wr = 0)
         int[] wc = {4,5}; //列重み
         int maxL = 50; //最大反復回数
-        int numFrames = 10; //フレーム数
+        int numFrames = 100; //フレーム数
 
         //通信路誤り率eの集合
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
 //            double[] e = {0.05};
 
         //タイム計測用配列
-        double[][] timesSquare = new double[wc.length][3];
+        double[][] executionTimes = new double[wc.length][3]; //トータルの実行時間
+        double[][] decodeTimes = new double[wc.length][eValues.length]; //各誤り率の復号時間
 
         //出力用保存配列-各誤り率のデータ
         double[][][] actualChannelBitErrorRate = new double[wc.length][eValues.length][numFrames]; //各フレームの実際の通信路誤り率
@@ -51,6 +52,9 @@ public class LDPC_LogSimu {
         //各列重みでのシミュレーション実行
         for(int column = 0;column < wc.length;column++){
 
+            //実行時間全体の計測開始
+            long startTotal = System.currentTimeMillis();
+
             //検査行列Hと生成行列Gの作成
             int [][] h = GenerateMatrix.gallagerCheckMatrix(n,wr,wc[column]);
             int [][] g = GenerateMatrix.generatorMatrix(h);
@@ -66,6 +70,9 @@ public class LDPC_LogSimu {
 
             //各通信路誤り率でのシミュレーション
             for(int errorRate = 0; errorRate < eValues.length; errorRate++){
+
+                //復号時間の合計用変数を初期化
+                long sumDecodeTime = 0;
 
                 //正誤毎の反復回数,フレーム数の合計([0]は反復回数,[1]はフレーム数)
                 int[] trueIterations = new int[2];
@@ -90,10 +97,17 @@ public class LDPC_LogSimu {
                         if(c[i] == r[i])noErrorBitIndex.add(i);
                     }
 
+                    //復号時間計測開始時間
+                    long startDecode = System.nanoTime();
+
                     //対数領域sum-product復号,確率領域sum-product復号法,Min-Sum復号法
                     LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,eValues[errorRate],maxL);
 //                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[errorRate],maxL);
 //                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[errorRate],maxL);
+
+                    //復号時間計測終了時間と復号時間の加算
+                    long endDecode = System.nanoTime();
+                    sumDecodeTime += (endDecode - startDecode);
 
                     //復号後と反復回数とシンドロームの取得
                     int[] decodedC = result.decodedCode();
@@ -135,6 +149,11 @@ public class LDPC_LogSimu {
                     //訂正したと勘違いした数
                     if(syndrome == 0 && !isFrameCorrect) undetectedErrors[column][errorRate]++;
                 }
+
+                //復号時間の保存
+                decodeTimes[column][errorRate] = sumDecodeTime / 60_000_000_000.0;
+                executionTimes[column][1] += decodeTimes[column][errorRate];
+
                 //正誤毎の反復回数の平均
                 averageTrueIterations[column][errorRate] = (double)trueIterations[0]/ trueIterations[1];
                 averageFalseIterations[column][errorRate] = (double)falseIterations[0]/ falseIterations[1];
@@ -151,6 +170,10 @@ public class LDPC_LogSimu {
                 //実際の誤り率の平均
                 aveChannelBitErrorRate[column][errorRate] = sumChannelBitError[column][errorRate]/numFrames;
             }
+            //実行全体の計測終了(書き出しを除く)
+            long endTotal = System.currentTimeMillis();
+            executionTimes[column][0] = (endTotal - startTotal) / 60_000.0;
+            executionTimes[column][2] = (executionTimes[column][1] / executionTimes[column][0]) * 100;
         }
 
         //実際の通信路誤り率の分散を求める
@@ -163,18 +186,21 @@ public class LDPC_LogSimu {
             }
         }
 
+        long startWrite = System.nanoTime();
+
         try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
-            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,,,,,,,","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数");
+            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,,,,|,","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)");
             pw.printf("\n");
-            for(int i = 0;i < wc.length;i++) pw.printf("%s,%s,%s,%s,%s,%s,,,,,,,",n,wr,wc[i],(1-(double)wc[i]/wr),maxL,numFrames);
+            for(int i = 0;i < wc.length;i++) pw.printf("%s,%s,%s,%s,%s,%s,%.2f,%.2f,%.2f,,,,|,",n,wr,wc[i],(1-(double)wc[i]/wr),maxL,numFrames,executionTimes[i][0],executionTimes[i][1],executionTimes[i][2]);
             pw.printf("\n\n");
-            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散","FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率");
+            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,|,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
+                    "FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
             pw.printf("\n");
             for(int i = 0;i < eValues.length;i++){
                 for(int j = 0;j < wc.length;j++){
-                    pw.printf("%.2f,%s,%.10f,%.4f,%.4f,%s,%s,%s,%s,%.6f,(%s/%s),,", eValues[i], aveChannelBitErrorRate[j][i],varianceChannelBitError[j][i],
+                    pw.printf("%.2f,%s,%.10f,%.4f,%.4f,%s,%s,%s,%s,%.6f,(%s/%s),%.2f,|,", eValues[i], aveChannelBitErrorRate[j][i],varianceChannelBitError[j][i],
                             frameErrorRate[j][i],infomationFrameErrorRate[j][i],undetectedErrors[j][i], infoBitErrorRate[j][i],averageTrueIterations[j][i],averageFalseIterations[j][i],
-                            ((double)errorCorrectionBits[j][i]/residualsErrorBits[j][i]),errorCorrectionBits[j][i],residualsErrorBits[j][i]);
+                            ((double)errorCorrectionBits[j][i]/residualsErrorBits[j][i]),errorCorrectionBits[j][i],residualsErrorBits[j][i],decodeTimes[j][i]);
                 }
                 pw.printf("\n");
             }
@@ -197,6 +223,8 @@ public class LDPC_LogSimu {
                 }
                 pw.printf("\n");
             }
+            long endWrite = System.nanoTime();
+            pw.printf("書き出し時間（秒）: %s",(endWrite - startWrite) / 1_000_000_000.0);
         } catch (IOException e) {
             e.printStackTrace();
         }

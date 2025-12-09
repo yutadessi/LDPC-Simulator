@@ -5,12 +5,13 @@ import java.util.List;
 import java.util.Arrays;
 
 public class ProbDecoder {
-    public record DecodingResult(int[] decodedCode, int iterationNum){}
+    public record DecodingResult(int[] decodedCode, int iterationNum, int syndrome){}
     public static DecodingResult decode(int[][] encodedH, int[] r, double e, int maxL) {
 
         //各ノードサイズ
         int numC = encodedH.length;
         int numV = encodedH[0].length;
+        int sumSyndro = 0;
 
         List<List<Integer>> A = new ArrayList<>(numC); // A(i)
         for (int i = 0; i < numC; i++) {
@@ -126,7 +127,7 @@ public class ProbDecoder {
             }
 
             //パリティ検査
-            int sumSyndro = 0;
+            sumSyndro = 0;
             int[] syndrome = new int[encodedH.length];
             for(int m = 0;m < encodedH.length;m++){
                 for(int n = 0;n < encodedH[0].length;n++){
@@ -137,11 +138,11 @@ public class ProbDecoder {
             }
             if(sumSyndro == 0){
 //                System.out.println("反復回数" + (l + 1) + "でパリティ検査通過");
-                return new DecodingResult(estimatedC,l + 1);
+                return new DecodingResult(estimatedC,l + 1,sumSyndro);
             }
 
         }
 //        System.out.println("最大反復回数" + maxL + "に到達しました。");
-        return new DecodingResult(estimatedC,maxL);
+        return new DecodingResult(estimatedC,maxL,sumSyndro);
     }
 }

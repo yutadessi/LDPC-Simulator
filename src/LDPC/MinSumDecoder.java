@@ -6,13 +6,14 @@ import java.util.List;
 public class MinSumDecoder {
 
     //レコード
-    public record DecodeResult (int[] decodedCode, int iterationNum){}
+    public record DecodeResult (int[] decodedCode, int iterationNum, int syndrome){}
 
     public static DecodeResult decode (int[][] encodedH, int[] r, double e, int maxL){
 
         //初期条件
         int numC = encodedH.length;
         int numV = encodedH[0].length;
+        int sumSyndro = 0;
 
         //インデックスA,B
         List<List<Integer>> A = new ArrayList<>(numC); // A(i)
@@ -33,11 +34,11 @@ public class MinSumDecoder {
         }
 
         //対数尤度比λ
-        double[] lamda = new double[r.length];
+        double[] lambda = new double[r.length];
         double l0 = Math.log((1 - e) / e);
 
         for(int j = 0;j < r.length;j++){
-            lamda[j] = (r[j] == 0) ? l0 : -l0;
+            lambda[j] = (r[j] == 0) ? l0 : -l0;
         }
 
         //対数領域メッセージα,β
@@ -54,7 +55,7 @@ public class MinSumDecoder {
             for(int j = 0;j < numV;j++){
                 List<Integer> connectedC = B.get(j);
                 for(int i : connectedC){
-                    double product = lamda[j];//λ(j)
+                    double product = lambda[j];//λ(j)
 
                     for(int k : connectedC){//+ Σα
                         if(k == i) continue;
@@ -89,7 +90,7 @@ public class MinSumDecoder {
             //一時推定ビットの決定
             double[] gamma = new double[numV];
             for(int j = 0;j < numV;j++){
-                gamma[j] = lamda[j];
+                gamma[j] = lambda[j];
                 for(int k : B.get(j)){
                     gamma[j] += alpha[k][j];
                 }
@@ -97,7 +98,7 @@ public class MinSumDecoder {
             }
 
             //パリティ検査
-            int sumSyndro = 0;
+            sumSyndro = 0;
             int[] syndrome = new int[encodedH.length];
             for(int m = 0;m < encodedH.length;m++){
                 for(int n = 0;n < encodedH[0].length;n++){
@@ -107,11 +108,11 @@ public class MinSumDecoder {
                 sumSyndro += syndrome[m];
             }
             if(sumSyndro == 0){
-                return new DecodeResult(estimatedCode,l + 1);
+                return new DecodeResult(estimatedCode,l + 1,sumSyndro);
             }
         }
 
-        return new DecodeResult(estimatedCode,maxL);
+        return new DecodeResult(estimatedCode,maxL,sumSyndro);
     }
 
 }
