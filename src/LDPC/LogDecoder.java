@@ -12,13 +12,14 @@ public class LogDecoder {
 
 
     //レコード
-    public record DecodeResult (int[] decodedCode, int iterationNum){}
+    public record DecodeResult (int[] decodedCode, int iterationNum, int syndrome){}
 
     public static DecodeResult decode (int[][] encodedH, int[] r, double e, int maxL){
 
         //初期条件
         int numC = encodedH.length;
         int numV = encodedH[0].length;
+        int sumSyndro = 0;
 
          //インデックスA,B
         List<List<Integer>> A = new ArrayList<>(numC); // A(i)
@@ -98,7 +99,7 @@ public class LogDecoder {
             }
 
             //パリティ検査
-            int sumSyndro = 0;
+            sumSyndro = 0;
             int[] syndrome = new int[encodedH.length];
             for(int m = 0;m < encodedH.length;m++){
                 for(int n = 0;n < encodedH[0].length;n++){
@@ -108,11 +109,11 @@ public class LogDecoder {
                 sumSyndro += syndrome[m];
             }
             if(sumSyndro == 0){
-                return new DecodeResult(estimatedCode,l + 1);
+                return new DecodeResult(estimatedCode,l + 1,sumSyndro);
             }
         }
 
-        return new DecodeResult(estimatedCode,maxL);
+        return new DecodeResult(estimatedCode,maxL,sumSyndro);
     }
 
 }
