@@ -15,16 +15,16 @@ public class LDPC_LogSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Try";
+        String fileNAMEME = "LogSum-ProductDecode";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv"; //結果保存ファイル名
 
         //符号パラメータ
         int n = 1024; //符号長
         int wr = 8; //行重み(n % wr = 0)
-        int[] wc = {4,5}; //列重み
+        int[] wc = {4}; //列重み
         int maxL = 50; //最大反復回数
-        int numFrames = 100; //フレーム数
+        int numFrames = 10000; //フレーム数
 
         //通信路誤り率eの集合
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
@@ -189,16 +189,16 @@ public class LDPC_LogSimu {
         long startWrite = System.nanoTime();
 
         try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
-            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,,,,|,","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)");
+            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,,,,,","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)");
             pw.printf("\n");
-            for(int i = 0;i < wc.length;i++) pw.printf("%s,%s,%s,%s,%s,%s,%.2f,%.2f,%.2f,,,,|,",n,wr,wc[i],(1-(double)wc[i]/wr),maxL,numFrames,executionTimes[i][0],executionTimes[i][1],executionTimes[i][2]);
+            for(int i = 0;i < wc.length;i++) pw.printf("%s,%s,%s,%s,%s,%s,%.2f,%.2f,%.2f,,,,,",n,wr,wc[i],(1-(double)wc[i]/wr),maxL,numFrames,executionTimes[i][0],executionTimes[i][1],executionTimes[i][2]);
             pw.printf("\n\n");
-            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,|,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
+            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
                     "FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
             pw.printf("\n");
             for(int i = 0;i < eValues.length;i++){
                 for(int j = 0;j < wc.length;j++){
-                    pw.printf("%.2f,%s,%.10f,%.4f,%.4f,%s,%s,%s,%s,%.6f,(%s/%s),%.2f,|,", eValues[i], aveChannelBitErrorRate[j][i],varianceChannelBitError[j][i],
+                    pw.printf("%.2f,%s,%.10f,%.4f,%.4f,%s,%s,%s,%s,%.6f,(%s/%s),%.2f,,", eValues[i], aveChannelBitErrorRate[j][i],varianceChannelBitError[j][i],
                             frameErrorRate[j][i],infomationFrameErrorRate[j][i],undetectedErrors[j][i], infoBitErrorRate[j][i],averageTrueIterations[j][i],averageFalseIterations[j][i],
                             ((double)errorCorrectionBits[j][i]/residualsErrorBits[j][i]),errorCorrectionBits[j][i],residualsErrorBits[j][i],decodeTimes[j][i]);
                 }
