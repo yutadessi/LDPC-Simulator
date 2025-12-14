@@ -83,7 +83,7 @@ public class MinSumDecoder {
                         if(k != j && minbata >  Math.abs(beta[k][i])) minbata = Math.abs(beta[k][i]);
                     }
 
-                    alpha[i][j] = product * minbata;
+                    alpha[i][j] = product * minbata * 0.7;
                 }
             }
 
