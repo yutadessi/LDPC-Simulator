@@ -6,16 +6,17 @@ import java.util.ArrayList;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.stream.IntStream; // ★追加: 並列処理用ライブラリ
 
 //--------------------デスクトップPCでの処理速度--------------------
 //処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):18分
 //処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):31分
 
-public class LDPC_LogSimu {
+public class LDPC_IntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Try-Try";
+        String fileNAMEME = "Try-fry";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv"; //結果保存ファイル名
 
@@ -52,6 +53,9 @@ public class LDPC_LogSimu {
         //各列重みでのシミュレーション実行
         for(int column = 0;column < wc.length;column++){
 
+            // ★追加: IntStream内で使うために変数をコピー (実質的final)
+            final int cIndex = column;
+
             //実行時間全体の計測開始
             long startTotal = System.currentTimeMillis();
 
@@ -71,25 +75,35 @@ public class LDPC_LogSimu {
             //各通信路誤り率でのシミュレーション
             for(int errorRate = 0; errorRate < eValues.length; errorRate++){
 
-                //復号時間の合計用変数を初期化
-                long sumDecodeTime = 0;
+                // ★追加: IntStream内で使うために変数をコピー
+                final int eIndex = errorRate;
+
+                //復号時間の合計用変数を初期化 (★変更: 配列にして内部から書き換え可能に)
+                final long[] sumDecodeTime = {0};
 
                 //正誤毎の反復回数,フレーム数の合計([0]は反復回数,[1]はフレーム数)
+                // (★これらは中で synchronized するのでこのままでOK)
                 int[] trueIterations = new int[2];
                 int[] falseIterations = new int[2];
 
-                int errorInfoBitsCounter = 0;
+                // (★変更: 配列化)
+                final int[] errorInfoBitsCounter = {0};
 
-                for(int frame = 0;frame < numFrames;frame++){
-                     //メッセージと送信語、受信語の作成
+                // ★追加: 同期ブロック用の鍵
+                Object lock = new Object();
+
+                // ★変更: IntStreamによる並列処理開始
+                IntStream.range(0, numFrames).parallel().forEach(frame -> {
+
+                    //メッセージと送信語、受信語の作成
                     int[] c = GenerateC.geneC(encodedG);
-                    int[] r = Channel.GenerateR(c,eValues[errorRate]);
+                    int[] r = Channel.GenerateR(c,eValues[eIndex]); // ★変更: eIndexを使用
 
-                    //フレームごとの情報ビットの正誤
+                    //フレームごとの情報ビットの正誤 (ローカル変数)
                     int currentInfoFrameErrorBits = 0;
 
-                    //実際の通信路での誤り率の取得
-                    actualChannelBitErrorRate[column][errorRate][frame] = Channel.CheckError(c,r);
+                    //実際の通信路での誤り率の取得 (frame添字で独立しているのでOK)
+                    actualChannelBitErrorRate[cIndex][eIndex][frame] = Channel.CheckError(c,r); // ★変更: cIndex, eIndexを使用
 
                     //情報ビットの非誤りビットのインデックス
                     List<Integer> noErrorBitIndex = new ArrayList<>();
@@ -101,13 +115,13 @@ public class LDPC_LogSimu {
                     long startDecode = System.nanoTime();
 
                     //対数領域sum-product復号,確率領域sum-product復号法,Min-Sum復号法
-//                    LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,eValues[errorRate],maxL);
-//                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[errorRate],maxL);
-                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[errorRate],maxL);
+                    LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,eValues[eIndex],maxL);
+//                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[eIndex],maxL);
+//                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[eIndex],maxL); // ★変更: eIndexを使用
 
-                    //復号時間計測終了時間と復号時間の加算
+                    //復号時間計測終了時間
                     long endDecode = System.nanoTime();
-                    sumDecodeTime += (endDecode - startDecode);
+                    long diffDecodeTime = endDecode - startDecode; // 個別に計算
 
                     //復号後と反復回数とシンドロームの取得
                     int[] decodedC = result.decodedCode();
@@ -117,41 +131,47 @@ public class LDPC_LogSimu {
                     //フレームの正誤判定
                     boolean isFrameCorrect = Arrays.equals(c,decodedC); //trueなら成功.falseなら失敗
 
-                    //反復回数の保存
-                    iterationDistribution[column][errorRate][iterations-1] ++;
+                    // --- ★ここから集計処理 (同期ブロック) ---
+                    synchronized(lock) {
+                        //復号時間の加算
+                        sumDecodeTime[0] += diffDecodeTime;
 
-                    //正誤毎の反復回数,フレーム数の加算
-                    if(isFrameCorrect){
-                        trueIterations[0] += iterations;
-                        trueIterations[1] ++;
-                    }else{
-                        falseIterations[0] += iterations;
-                        falseIterations[1] ++;
-                    }
+                        //反復回数の保存
+                        iterationDistribution[cIndex][eIndex][iterations-1] ++; // ★変更: cIndex, eIndex
 
-                    //残留誤りビットと誤訂正ビットの加算
-                    for(int z = 0;z < g.length;z++){
-                        if(c[z] != decodedC[z]){
-                            residualsErrorBits[column][errorRate] ++;
-                            currentInfoFrameErrorBits++;
+                        //正誤毎の反復回数,フレーム数の加算
+                        if(isFrameCorrect){
+                            trueIterations[0] += iterations;
+                            trueIterations[1] ++;
+                        }else{
+                            falseIterations[0] += iterations;
+                            falseIterations[1] ++;
                         }
+
+                        //残留誤りビットと誤訂正ビットの加算
+                        for(int z = 0;z < g.length;z++){
+                            if(c[z] != decodedC[z]){
+                                residualsErrorBits[cIndex][eIndex] ++;
+                                currentInfoFrameErrorBits++;
+                            }
+                        }
+                        for(int x : noErrorBitIndex){
+                            if(c[x] != decodedC[x])errorCorrectionBits[cIndex][eIndex] ++;
+                        }
+
+                        //情報ビットの正誤
+                        if(currentInfoFrameErrorBits != 0) errorInfoBitsCounter[0]++; // ★変更: 配列アクセス
+
+                        //実際の誤り率の加算
+                        sumChannelBitError[cIndex][eIndex] += actualChannelBitErrorRate[cIndex][eIndex][frame];
+
+                        //訂正したと勘違いした数
+                        if(syndrome == 0 && !isFrameCorrect) undetectedErrors[cIndex][eIndex]++;
                     }
-                    for(int x : noErrorBitIndex){
-                        if(c[x] != decodedC[x])errorCorrectionBits[column][errorRate] ++;
-                    }
+                }); // IntStream 終了
 
-                    //情報ビットの正誤
-                    if(currentInfoFrameErrorBits != 0)errorInfoBitsCounter++;
-
-                    //実際の誤り率の加算
-                    sumChannelBitError[column][errorRate] += actualChannelBitErrorRate[column][errorRate][frame];
-
-                    //訂正したと勘違いした数
-                    if(syndrome == 0 && !isFrameCorrect) undetectedErrors[column][errorRate]++;
-                }
-
-                //復号時間の保存
-                decodeTimes[column][errorRate] = sumDecodeTime / 60_000_000_000.0;
+                //復号時間の保存 (★変更: [0]を使用)
+                decodeTimes[column][errorRate] = sumDecodeTime[0] / 60_000_000_000.0;
                 executionTimes[column][1] += decodeTimes[column][errorRate];
 
                 //正誤毎の反復回数の平均
@@ -164,8 +184,8 @@ public class LDPC_LogSimu {
                 //IBER
                 infoBitErrorRate[column][errorRate] = (double)residualsErrorBits[column][errorRate] / (g.length * numFrames);
 
-                //IFER
-                informationFrameErrorRate[column][errorRate] = (double)errorInfoBitsCounter/numFrames;
+                //IFER (★変更: [0]を使用)
+                informationFrameErrorRate[column][errorRate] = (double)errorInfoBitsCounter[0]/numFrames;
 
                 //実際の誤り率の平均
                 aveChannelBitErrorRate[column][errorRate] = sumChannelBitError[column][errorRate]/numFrames;

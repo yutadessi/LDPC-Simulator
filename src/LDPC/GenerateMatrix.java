@@ -3,6 +3,7 @@ package LDPC;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 //行列作成クラス
 public class GenerateMatrix {
@@ -86,4 +87,93 @@ public class GenerateMatrix {
         }
         return G_Matrix;
     }
+
+    public static int[][] generateQC(int z,int mb,int nb){
+        int[][] baseM = new int[mb][nb];
+        Random rand = new Random();
+        boolean fails;
+
+        do{
+            //ベース行列の作成
+            for(int i = 0;i < mb;i++){
+                for(int j = 0;j < nb;j++){
+                    baseM[i][j] = rand.nextInt(z+1) - 1;
+                }
+            }
+
+            fails = false;
+
+            // --- 条件1：各行の非-1要素 ≥ 2 ---
+            for (int i = 0; i < mb; i++) {
+                int count = 0;
+                for (int j = 0; j < nb; j++) {
+                    if (baseM[i][j] != -1) count++;
+                }
+                if (count < 2) {
+                    fails = true;
+                    break;
+                }
+            }
+
+            // --- 条件2：各列の非-1要素 ≥ 2 ---
+            if (!fails) {
+                for (int j = 0; j < nb; j++) {
+                    int count = 0;
+                    for (int i = 0; i < mb; i++) {
+                        if (baseM[i][j] != -1) count++;
+                    }
+                    if (count < 2) {
+                        fails = true;
+                        break;
+                    }
+                }
+            }
+
+            // --- 条件3：4-cycle チェック ---
+            if (!fails && has4Cycle(baseM, z)) {
+                fails = true;
+            }
+
+        }while (fails);
+
+        //展開
+        int[][] QC = new int[mb * z][nb * z];
+        for(int i = 0;i < mb;i++){
+            for(int j = 0;j < nb;j++){
+                if(baseM[i][j] == -1) continue;
+                for(int k = 0;k < z;k++){
+                    int r = i * z + k;
+                    int c = j * z + (k + baseM[i][j]) % z;
+                    QC[r][c] = 1;
+                }
+            }
+        }
+
+        return QC;
+    }
+
+    static boolean has4Cycle(int[][] B, int z) {
+        int mb = B.length;
+        int nb = B[0].length;
+
+        for (int i1 = 0; i1 < mb; i1++) {
+            for (int i2 = i1 + 1; i2 < mb; i2++) {
+                for (int j1 = 0; j1 < nb; j1++) {
+                    if (B[i1][j1] == -1 || B[i2][j1] == -1) continue;
+                    for (int j2 = j1 + 1; j2 < nb; j2++) {
+                        if (B[i1][j2] == -1 || B[i2][j2] == -1) continue;
+
+                        int lhs = (B[i1][j1] - B[i1][j2] + z) % z;
+                        int rhs = (B[i2][j1] - B[i2][j2] + z) % z;
+
+                        if (lhs == rhs) {
+                            return true; // 4-cycle あり
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 }
