@@ -220,8 +220,8 @@ public class LDPC_QCIntStreamSimu {
             pw.printf("\n以下は反復回数の度数分布\n");
             for(int i = 0;i < mb.length;i++){
                 pw.printf("回数\\通信路誤り率,");
-                for(int j = 0;j < eValues.length;j++){
-                    pw.printf("%s,",eValues[j]);
+                for (double eValue : eValues) {
+                    pw.printf("%s,", eValue);
                 }
                 pw.printf(",,");
             }
