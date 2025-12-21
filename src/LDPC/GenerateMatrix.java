@@ -167,7 +167,7 @@ public class GenerateMatrix {
                         int rhs = (B[i2][j1] - B[i2][j2] + z) % z;
 
                         if (lhs == rhs) {
-                            return true; // 4-cycle あり
+                            return true; // 4-cycleあり
                         }
                     }
                 }

@@ -12,11 +12,11 @@ import java.util.stream.IntStream; // ★追加: 並列処理用ライブラリ
 //処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):18分
 //処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):31分
 
-public class LDPC_QCSimu {
+public class LDPC_QCIntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Try-fry";
+        String fileNAMEME = "Try-QC";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv"; //結果保存ファイル名
 

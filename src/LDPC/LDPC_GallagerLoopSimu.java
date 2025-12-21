@@ -7,11 +7,7 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-//--------------------デスクトップPCでの処理速度--------------------
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):18分
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):31分
-
-public class LDPC_LogSimu {
+public class LDPC_GallagerLoopSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
@@ -22,13 +18,12 @@ public class LDPC_LogSimu {
         //符号パラメータ
         int n = 1024; //符号長
         int wr = 8; //行重み(n % wr = 0)
-        int[] wc = {4,4}; //列重み
+        int[] wc = {4}; //列重み
         int maxL = 50; //最大反復回数
-        int numFrames = 10; //フレーム数
+        int numFrames = 10_000; //フレーム数
 
         //通信路誤り率eの集合
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
-//            double[] e = {0.05};
 
         //タイム計測用配列
         double[][] executionTimes = new double[wc.length][3]; //トータルの実行時間

@@ -6,26 +6,22 @@ import java.util.ArrayList;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.stream.IntStream; // ★追加: 並列処理用ライブラリ
+import java.util.stream.IntStream;
 
-//--------------------デスクトップPCでの処理速度--------------------
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):18分
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):31分
-
-public class LDPC_IntStreamSimu {
+public class LDPC_GallagerIntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "Try-fry";
+        String fileNAMEME = "8-4(100,000)";
         //------------------------------
-        String fileNames = fileNAMEME + "-result.csv"; //結果保存ファイル名
+        String fileNames = fileNAMEME + "-result.csv";
 
         //符号パラメータ
-        int n = 1024; //符号長
+        int n = 1020; //符号長
         int wr = 8; //行重み(n % wr = 0)
-        int[] wc = {4,4}; //列重み
+        int[] wc = {4}; //列重み
         int maxL = 50; //最大反復回数
-        int numFrames = 10; //フレーム数
+        int numFrames = 100000; //フレーム数
 
         //通信路誤り率eの集合
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
