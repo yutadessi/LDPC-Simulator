@@ -6,11 +6,7 @@ import java.util.ArrayList;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.stream.IntStream; // ★追加: 並列処理用ライブラリ
-
-//--------------------デスクトップPCでの処理速度--------------------
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:20 ):18分
-//処理速度(フレーム数:10000,1024-8-4サイズ,誤り率数:10,Lmax:100):31分
+import java.util.stream.IntStream;
 
 public class LDPC_QCIntStreamSimu {
     public static void main(String[] args) {
@@ -26,7 +22,7 @@ public class LDPC_QCIntStreamSimu {
         int[] mb = {4}; //列重み
         int n = z * nb; //符号長
         int maxL = 50; //最大反復回数
-        int numFrames = 10000; //フレーム数
+        int numFrames = 10_000; //フレーム数
 
         //通信路誤り率eの集合
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
@@ -54,7 +50,7 @@ public class LDPC_QCIntStreamSimu {
         //各列重みでのシミュレーション実行
         for(int column = 0;column < mb.length;column++){
 
-            // ★追加: IntStream内で使うために変数をコピー (実質的final)
+            //IntStream用にfinal化
             final int cIndex = column;
 
             //実行時間全体の計測開始
@@ -76,35 +72,32 @@ public class LDPC_QCIntStreamSimu {
             //各通信路誤り率でのシミュレーション
             for(int errorRate = 0; errorRate < eValues.length; errorRate++){
 
-                // ★追加: IntStream内で使うために変数をコピー
+                //IntStream用にfinal化
                 final int eIndex = errorRate;
 
-                //復号時間の合計用変数を初期化 (★変更: 配列にして内部から書き換え可能に)
+                //復号時間の合計用変数を初期化
                 final long[] sumDecodeTime = {0};
 
                 //正誤毎の反復回数,フレーム数の合計([0]は反復回数,[1]はフレーム数)
-                // (★これらは中で synchronized するのでこのままでOK)
                 int[] trueIterations = new int[2];
                 int[] falseIterations = new int[2];
 
-                // (★変更: 配列化)
                 final int[] errorInfoBitsCounter = {0};
 
-                // ★追加: 同期ブロック用の鍵
                 Object lock = new Object();
 
-                // ★変更: IntStreamによる並列処理開始
+                //並列処理開始
                 IntStream.range(0, numFrames).parallel().forEach(frame -> {
 
                     //メッセージと送信語、受信語の作成
                     int[] c = GenerateC.geneC(encodedG);
-                    int[] r = Channel.GenerateR(c,eValues[eIndex]); // ★変更: eIndexを使用
+                    int[] r = Channel.GenerateR(c,eValues[eIndex]);
 
-                    //フレームごとの情報ビットの正誤 (ローカル変数)
+                    //フレームごとの情報ビットの正誤
                     int currentInfoFrameErrorBits = 0;
 
-                    //実際の通信路での誤り率の取得 (frame添字で独立しているのでOK)
-                    actualChannelBitErrorRate[cIndex][eIndex][frame] = Channel.CheckError(c,r); // ★変更: cIndex, eIndexを使用
+                    //実際の通信路での誤り率の取得
+                    actualChannelBitErrorRate[cIndex][eIndex][frame] = Channel.CheckError(c,r);
 
                     //情報ビットの非誤りビットのインデックス
                     List<Integer> noErrorBitIndex = new ArrayList<>();
@@ -118,11 +111,11 @@ public class LDPC_QCIntStreamSimu {
                     //対数領域sum-product復号,確率領域sum-product復号法,Min-Sum復号法
                     LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,eValues[eIndex],maxL);
 //                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[eIndex],maxL);
-//                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[eIndex],maxL); // ★変更: eIndexを使用
+//                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[eIndex],maxL);
 
                     //復号時間計測終了時間
                     long endDecode = System.nanoTime();
-                    long diffDecodeTime = endDecode - startDecode; // 個別に計算
+                    long diffDecodeTime = endDecode - startDecode;
 
                     //復号後と反復回数とシンドロームの取得
                     int[] decodedC = result.decodedCode();
@@ -132,13 +125,13 @@ public class LDPC_QCIntStreamSimu {
                     //フレームの正誤判定
                     boolean isFrameCorrect = Arrays.equals(c,decodedC); //trueなら成功.falseなら失敗
 
-                    // --- ★ここから集計処理 (同期ブロック) ---
+                    //集計処理
                     synchronized(lock) {
                         //復号時間の加算
                         sumDecodeTime[0] += diffDecodeTime;
 
                         //反復回数の保存
-                        iterationDistribution[cIndex][eIndex][iterations-1] ++; // ★変更: cIndex, eIndex
+                        iterationDistribution[cIndex][eIndex][iterations-1] ++;
 
                         //正誤毎の反復回数,フレーム数の加算
                         if(isFrameCorrect){
@@ -161,7 +154,7 @@ public class LDPC_QCIntStreamSimu {
                         }
 
                         //情報ビットの正誤
-                        if(currentInfoFrameErrorBits != 0) errorInfoBitsCounter[0]++; // ★変更: 配列アクセス
+                        if(currentInfoFrameErrorBits != 0) errorInfoBitsCounter[0]++;
 
                         //実際の誤り率の加算
                         sumChannelBitError[cIndex][eIndex] += actualChannelBitErrorRate[cIndex][eIndex][frame];
@@ -169,9 +162,9 @@ public class LDPC_QCIntStreamSimu {
                         //訂正したと勘違いした数
                         if(syndrome == 0 && !isFrameCorrect) undetectedErrors[cIndex][eIndex]++;
                     }
-                }); // IntStream 終了
+                }); //並列処理終了
 
-                //復号時間の保存 (★変更: [0]を使用)
+                //復号時間の保存
                 decodeTimes[column][errorRate] = sumDecodeTime[0] / 60_000_000_000.0;
                 executionTimes[column][1] += decodeTimes[column][errorRate];
 
@@ -185,13 +178,13 @@ public class LDPC_QCIntStreamSimu {
                 //IBER
                 infoBitErrorRate[column][errorRate] = (double)residualsErrorBits[column][errorRate] / (g.length * numFrames);
 
-                //IFER (★変更: [0]を使用)
+                //IFER
                 informationFrameErrorRate[column][errorRate] = (double)errorInfoBitsCounter[0]/numFrames;
 
                 //実際の誤り率の平均
                 aveChannelBitErrorRate[column][errorRate] = sumChannelBitError[column][errorRate]/numFrames;
             }
-            //実行全体の計測終了(書き出しを除く)
+            //実行全体の計測終了
             long endTotal = System.currentTimeMillis();
             executionTimes[column][0] = (endTotal - startTotal) / 60_000.0;
             executionTimes[column][2] = (executionTimes[column][1] / executionTimes[column][0]) * 100;
