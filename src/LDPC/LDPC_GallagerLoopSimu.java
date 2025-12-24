@@ -22,30 +22,32 @@ public class LDPC_GallagerLoopSimu {
         int maxL = 50; //最大反復回数
         int numFrames = 10_000; //フレーム数
 
+        int numCM = 50;
+
         //通信路誤り率eの集合
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
 
         //タイム計測用配列
-        double[][] executionTimes = new double[wc.length][3]; //トータルの実行時間
-        double[][] decodeTimes = new double[wc.length][eValues.length]; //各誤り率の復号時間
+        double[][] executionTimes = new double[numCM][3]; //トータルの実行時間
+        double[][] decodeTimes = new double[numCM][eValues.length]; //各誤り率の復号時間
 
         //出力用保存配列-各誤り率のデータ
-        double[][][] actualChannelBitErrorRate = new double[wc.length][eValues.length][numFrames]; //各フレームの実際の通信路誤り率
-        double[][] sumChannelBitError = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の合計
-        double[][] aveChannelBitErrorRate = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の平均
-        double[][] varianceChannelBitError = new double[wc.length][eValues.length]; //各誤り率における実際の通信路誤り率の分散
-        double[][] frameErrorRate = new double[wc.length][eValues.length]; //FER(符号長の失敗確率)
-        double[][] informationFrameErrorRate = new double[wc.length][eValues.length]; //IFER(情報ビットのみの失敗率率）
-        double[][] infoBitErrorRate = new double[wc.length][eValues.length]; //IBER(Info Bit Error Rate)
-        double[][] averageTrueIterations = new double[wc.length][eValues.length]; //訂正成功時の平均繰り返し回数
-        double[][] averageFalseIterations = new double[wc.length][eValues.length]; //訂正失敗時の平均繰り返し回数
-        int[][] residualsErrorBits = new int[wc.length][eValues.length]; //情報ビットの残留誤りビット数
-        int[][] errorCorrectionBits = new int[wc.length][eValues.length]; //情報ビットの誤訂正ビット数
-        double[][][] iterationDistribution = new double[wc.length][eValues.length][maxL]; //反復回数の度数分布
-        int[][] undetectedErrors = new int[wc.length][eValues.length]; //シンドロームは0だが,誤訂正している数
+        double[][][] actualChannelBitErrorRate = new double[numCM][eValues.length][numFrames]; //各フレームの実際の通信路誤り率
+        double[][] sumChannelBitError = new double[numCM][eValues.length]; //各誤り率における実際の通信路誤り率の合計
+        double[][] aveChannelBitErrorRate = new double[numCM][eValues.length]; //各誤り率における実際の通信路誤り率の平均
+        double[][] varianceChannelBitError = new double[numCM][eValues.length]; //各誤り率における実際の通信路誤り率の分散
+        double[][] frameErrorRate = new double[numCM][eValues.length]; //FER(符号長の失敗確率)
+        double[][] informationFrameErrorRate = new double[numCM][eValues.length]; //IFER(情報ビットのみの失敗率率）
+        double[][] infoBitErrorRate = new double[numCM][eValues.length]; //IBER(Info Bit Error Rate)
+        double[][] averageTrueIterations = new double[numCM][eValues.length]; //訂正成功時の平均繰り返し回数
+        double[][] averageFalseIterations = new double[numCM][eValues.length]; //訂正失敗時の平均繰り返し回数
+        int[][] residualsErrorBits = new int[numCM][eValues.length]; //情報ビットの残留誤りビット数
+        int[][] errorCorrectionBits = new int[numCM][eValues.length]; //情報ビットの誤訂正ビット数
+        double[][][] iterationDistribution = new double[numCM][eValues.length][maxL]; //反復回数の度数分布
+        int[][] undetectedErrors = new int[numCM][eValues.length]; //シンドロームは0だが,誤訂正している数
 
         //各列重みでのシミュレーション実行
-        for(int column = 0;column < wc.length;column++){
+        for(int column = 0;column < numCM;column++){
 
             //実行時間全体の計測開始
             long startTotal = System.currentTimeMillis();
@@ -172,7 +174,7 @@ public class LDPC_GallagerLoopSimu {
         }
 
         //実際の通信路誤り率の分散を求める
-        for(int i = 0;i < wc.length;i++){
+        for(int i = 0;i < numCM;i++){
             for(int j = 0;j < eValues.length;j++){
                 for(int k = 0;k < numFrames;k++){
                     varianceChannelBitError[i][j] += Math.pow((actualChannelBitErrorRate[i][j][k] - aveChannelBitErrorRate[i][j]),2);
@@ -183,15 +185,15 @@ public class LDPC_GallagerLoopSimu {
 
         //ファイルへの書き出し
         try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
-            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,,,,,","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)");
+            for(int i = 0;i < numCM;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,,,,,","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)");
             pw.printf("\n");
-            for(int i = 0;i < wc.length;i++) pw.printf("%s,%s,%s,%s,%s,%s,%.2f,%.2f,%.2f,,,,,",n,wr,wc[i],(1-(double)wc[i]/wr),maxL,numFrames,executionTimes[i][0],executionTimes[i][1],executionTimes[i][2]);
+            for(int i = 0;i < numCM;i++) pw.printf("%s,%s,%s,%s,%s,%s,%.2f,%.2f,%.2f,,,,,",n,wr,wc[i],(1-(double)wc[i]/wr),maxL,numFrames,executionTimes[i][0],executionTimes[i][1],executionTimes[i][2]);
             pw.printf("\n\n");
-            for(int i = 0;i < wc.length;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
+            for(int i = 0;i < numCM;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
                     "FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
             pw.printf("\n");
             for(int i = 0;i < eValues.length;i++){
-                for(int j = 0;j < wc.length;j++){
+                for(int j = 0;j < numCM;j++){
                     pw.printf("%.2f,%s,%.10f,%.4f,%.4f,%s,%s,%s,%s,%.6f,(%s/%s),%.2f,,", eValues[i], aveChannelBitErrorRate[j][i],varianceChannelBitError[j][i],
                             frameErrorRate[j][i],informationFrameErrorRate[j][i],undetectedErrors[j][i], infoBitErrorRate[j][i],averageTrueIterations[j][i],averageFalseIterations[j][i],
                             ((double)errorCorrectionBits[j][i]/residualsErrorBits[j][i]),errorCorrectionBits[j][i],residualsErrorBits[j][i],decodeTimes[j][i]);
@@ -199,7 +201,7 @@ public class LDPC_GallagerLoopSimu {
                 pw.printf("\n");
             }
             pw.printf("\n以下は反復回数の度数分布\n");
-            for(int i = 0;i < wc.length;i++){
+            for(int i = 0;i < numCM;i++){
                 pw.printf("回数\\通信路誤り率,");
                 for (double eValue : eValues) {
                     pw.printf("%s,", eValue);
@@ -208,7 +210,7 @@ public class LDPC_GallagerLoopSimu {
             }
             pw.printf("\n");
             for(int i = 0;i < maxL;i++){
-                for(int j = 0;j < wc.length;j++){
+                for(int j = 0;j < numCM;j++){
                     pw.printf("%s,",i);
                     for(int k = 0;k < eValues.length;k++){
                         pw.printf("%s,",iterationDistribution[j][k][i]);

@@ -12,33 +12,19 @@ public class LDPC_LoadIntStream {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "No.3";
+        String fileNAMEME = "8-4(10_000)QC-LOG6";
         //------------------------------
 
-        String fileNames = fileNAMEME + "-LoadHResult.txt";
+        String fileNames = fileNAMEME + "-LoadHResult.csv";
         String filePath = fileNAMEME + "-HMatrix.txt";
 
         //符号パラメーター
-        int maxL = 20; //最大反復回数
-        int numFrames = 10_000; //フレーム数
+        int maxL = 50; //最大反復回数
+        int numFrames = 100_000; //フレーム数
 
         //通信路誤り率eの設定
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
 //        double[] eValues = {0.03};
-
-        //検査行列Hと生成行列Gの作成
-        int [][] H = CheckMatrixIO.loadCheckMatrix(filePath);
-        int [][] G = GenerateMatrix.generatorMatrix(H);
-
-        int n = H[0].length;
-        int wr = 0;
-        for(int i = 0;i < n;i++){
-            if(H[0][i] == 0){
-                wr = i;
-                break;
-            }
-        }
-        int wc = (H.length * wr / n);
 
         //タイム計測用配列
         double[] executionTimes = new double[3]; //トータルの実行時間
@@ -63,9 +49,19 @@ public class LDPC_LoadIntStream {
         //実行時間全体の計測開始
         long startTotal = System.currentTimeMillis();
 
-        //検査行列hの復元と生成行列gの作成
+        //検査行列hと生成行列gの作成
         int [][] h = CheckMatrixIO.loadCheckMatrix(filePath);
         int [][] g = GenerateMatrix.generatorMatrix(h);
+
+        int n = h[0].length;
+        int wr = 0;
+        for(int i = 0;i < n;i++){
+            if(h[0][i] == 0){
+                wr = i;
+                break;
+            }
+        }
+        int wc = (h.length * wr / n);
 
         //HとGを組織符号化
         List<Integer> columnIndicatesToSwap = new ArrayList<>();  //組織符号化用インデックス
@@ -209,7 +205,7 @@ public class LDPC_LoadIntStream {
             pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
                     "FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
             for(int i = 0;i < eValues.length;i++){
-                    pw.printf("%.2f,%s,%.10f,%.4f,%.4f,%s,%s,%s,%s,%.6f,(%s/%s),%.2f,,", eValues[i], aveChannelBitErrorRate[i],varianceChannelBitError[i],
+                    pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%.6f,(%s/%s),%.2f,,", eValues[i], aveChannelBitErrorRate[i],varianceChannelBitError[i],
                             frameErrorRate[i],informationFrameErrorRate[i],undetectedErrors[i], infoBitErrorRate[i],averageTrueIterations[i],averageFalseIterations[i],
                             ((double)errorCorrectionBits[i]/residualsErrorBits[i]),errorCorrectionBits[i],residualsErrorBits[i],decodeTimes[i]);
                 pw.printf("\n");
