@@ -21,7 +21,7 @@ public class LDPC_GallagerIntStreamSimu {
         int wr = 8; //行重み(n % wr = 0)
         int wc = 4; //列重み
         int maxL = 50; //最大反復回数
-        int numFrames = 10_000; //フレーム数
+        int numFrames = 10; //フレーム数
 
         //検査行列作成数
         int numCM = 50;
@@ -296,7 +296,7 @@ public class LDPC_GallagerIntStreamSimu {
         varScore /= numCM; // 母分散
 
 
-        //ファイルへの書き出し
+
         //ファイルへの書き出し
         try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
 

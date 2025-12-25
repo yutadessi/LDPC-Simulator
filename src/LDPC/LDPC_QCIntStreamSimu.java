@@ -24,7 +24,7 @@ public class LDPC_QCIntStreamSimu {
         int maxL = 50; //最大反復回数
         int numFrames = 10_000; //フレーム数
 
-        //検査行列の数
+        //検査行列作成数
         int numCM = 50;
 
         //通信路誤り率eの集合
@@ -359,6 +359,32 @@ public class LDPC_QCIntStreamSimu {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    static double mean(double[] a) {
+        double s = 0;
+        for (double v : a) s += v;
+        return s / a.length;
+    }
 
+    static double variance(double[] a) {
+        double m = mean(a);
+        double s = 0;
+        for (double v : a) {
+            double d = v - m;
+            s += d * d;
+        }
+        return s / a.length; // 母分散
+    }
+
+    static double min(double[] a) {
+        double m = Double.POSITIVE_INFINITY;
+        for (double v : a) if (v < m) m = v;
+        return m;
+    }
+
+    static double max(double[] a) {
+        double m = Double.NEGATIVE_INFINITY;
+        for (double v : a) if (v > m) m = v;
+        return m;
     }
 }
