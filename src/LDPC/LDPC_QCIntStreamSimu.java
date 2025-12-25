@@ -47,7 +47,7 @@ public class LDPC_QCIntStreamSimu {
         double[][] averageFalseIterations = new double[numCM][eValues.length]; //訂正失敗時の平均繰り返し回数
         int[][] residualsErrorBits = new int[numCM][eValues.length]; //情報ビットの残留誤りビット数
         int[][] errorCorrectionBits = new int[numCM][eValues.length]; //情報ビットの誤訂正ビット数
-        double[][][] iterationDistribution = new double[numCM][eValues.length][maxL]; //反復回数の度数分布
+        int[][][] iterationDistribution = new int[numCM][eValues.length][maxL]; //反復回数の度数分布
         int[][] undetectedErrors = new int[numCM][eValues.length]; //シンドロームは0だが,誤訂正している数
 
         //各列重みでのシミュレーション実行
@@ -172,8 +172,10 @@ public class LDPC_QCIntStreamSimu {
                 executionTimes[column][1] += decodeTimes[column][errorRate];
 
                 //正誤毎の反復回数の平均
-                averageTrueIterations[column][errorRate] = (double)trueIterations[0]/ trueIterations[1];
-                averageFalseIterations[column][errorRate] = (double)falseIterations[0]/ falseIterations[1];
+                averageTrueIterations[column][errorRate]  =
+                        (trueIterations[1]  == 0) ? Double.NaN : (double) trueIterations[0]  / trueIterations[1];
+                averageFalseIterations[column][errorRate] =
+                        (falseIterations[1] == 0) ? Double.NaN : (double) falseIterations[0] / falseIterations[1];
 
                 //FER
                 frameErrorRate[column][errorRate] = (double)falseIterations[1]/numFrames;
@@ -218,7 +220,13 @@ public class LDPC_QCIntStreamSimu {
             for (int ei = 0; ei < eValues.length; ei++) {
                 sLogFer += Math.log10(frameErrorRate[cm][ei] + eps);
                 sLogIber += Math.log10(infoBitErrorRate[cm][ei] + eps);
-                sIter += averageTrueIterations[cm][ei];   // ここは好みで (true+false)/2 にしてもOK
+                // 全フレームの平均反復回数（成功/失敗に依存せず必ず定義できる）
+                int iterSum = 0;
+                for (int it = 0; it < maxL; it++) {
+                    iterSum += (it + 1) * iterationDistribution[cm][ei][it]; // it=0 が 1回
+                }
+                double avgIterAll = (double) iterSum / numFrames;
+                sIter += avgIterAll;
                 sTime += decodeTimes[cm][ei];
             }
 
