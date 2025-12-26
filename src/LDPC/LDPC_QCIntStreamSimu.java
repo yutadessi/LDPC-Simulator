@@ -12,7 +12,7 @@ public class LDPC_QCIntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "8-4(10_000)QC-LOG";
+        String fileNAMEME = "8-4(10_000)QC-LOGT";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv"; //結果保存ファイル名
 

@@ -12,7 +12,7 @@ public class LDPC_LoadIntStream {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "8-4(10_000)QC-LOG6";
+        String fileNAMEME = "8-4(10_000)QC-LOGT8";
         //------------------------------
 
         String fileNames = fileNAMEME + "-LoadHResult.csv";
@@ -42,7 +42,7 @@ public class LDPC_LoadIntStream {
         double[] averageFalseIterations = new double[eValues.length]; //訂正失敗時の平均繰り返し回数
         int[] residualsErrorBits = new int[eValues.length]; //情報ビットの残留誤りビット数
         int[] errorCorrectionBits = new int[eValues.length]; //情報ビットの誤訂正ビット数
-        double[][] iterationDistribution = new double[eValues.length][maxL]; //反復回数の度数分布
+        int[][] iterationDistribution = new int[eValues.length][maxL]; //反復回数の度数分布
         int[] undetectedErrors = new int[eValues.length]; //シンドロームは0だが,誤訂正している数
 
 
@@ -168,8 +168,11 @@ public class LDPC_LoadIntStream {
             executionTimes[1] += decodeTimes[errorRate];
 
             //正誤毎の反復回数の平均
-            averageTrueIterations[errorRate] = (double)trueIterations[0]/ trueIterations[1];
-            averageFalseIterations[errorRate] = (double)falseIterations[0]/ falseIterations[1];
+            averageTrueIterations[errorRate]  =
+                    (trueIterations[1]  == 0) ? Double.NaN : (double) trueIterations[0]  / trueIterations[1];
+            averageFalseIterations[errorRate] =
+                    (falseIterations[1] == 0) ? Double.NaN : (double) falseIterations[0] / falseIterations[1];
+
 
             //FER
             frameErrorRate[errorRate] = (double)falseIterations[1]/numFrames;
@@ -197,30 +200,92 @@ public class LDPC_LoadIntStream {
             varianceChannelBitError[j] /= numFrames;
         }
 
+        // ===== 最終スコア計算（小さいほど良い）=====
+        final double eps = 1e-12;
+
+        double sumLogFER = 0.0;
+        double sumLogIBER = 0.0;
+        double sumIterAll = 0.0;
+        double sumDecTime = 0.0;
+
+        for (int ei = 0; ei < eValues.length; ei++) {
+            sumLogFER  += Math.log10(frameErrorRate[ei] + eps);
+            sumLogIBER += Math.log10(infoBitErrorRate[ei] + eps);
+
+            double iterSum = 0.0;
+            for (int it = 0; it < maxL; it++) {
+                iterSum += (it + 1) * iterationDistribution[ei][it];
+            }
+            double avgIterAll = iterSum / numFrames;   // 全フレーム平均反復回数
+            sumIterAll += avgIterAll;
+
+            sumDecTime += decodeTimes[ei];
+        }
+
+        double avgLogFER = sumLogFER / eValues.length;
+        double avgLogIBER = sumLogIBER / eValues.length;
+        double avgIter = sumIterAll / eValues.length;
+        double avgDecodeTime = sumDecTime / eValues.length;
+
+        // RawScore（単一行列版）
+        double score = 0.55 * avgLogFER + 0.25 * avgLogIBER + 0.10 * avgIter + 0.10 * avgDecodeTime;
+
+
 
         //ファイルへの書き出し
         try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
-            pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)");
-            pw.printf("%s,%s,%s,%s,%s,%s,%.2f,%.2f,%.2f\n\n",n,wr,wc,(1-(double)wc/wr),maxL,numFrames,executionTimes[0],executionTimes[1],executionTimes[2]);
-            pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
-                    "FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
-            for(int i = 0;i < eValues.length;i++){
-                    pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%.6f,(%s/%s),%.2f,,", eValues[i], aveChannelBitErrorRate[i],varianceChannelBitError[i],
-                            frameErrorRate[i],informationFrameErrorRate[i],undetectedErrors[i], infoBitErrorRate[i],averageTrueIterations[i],averageFalseIterations[i],
-                            ((double)errorCorrectionBits[i]/residualsErrorBits[i]),errorCorrectionBits[i],residualsErrorBits[i],decodeTimes[i]);
-                pw.printf("\n");
+
+            pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    "符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)");
+
+            pw.printf("%d,%d,%d,%.6f,%d,%d,%.2f,%.2f,%.2f\n\n",
+                    n, wr, wc, (1 - (double) wc / wr), maxL, numFrames, executionTimes[0], executionTimes[1], executionTimes[2]);
+
+            pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    "通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
+                    "FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数",
+                    "平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
+
+            for (int i = 0; i < eValues.length; i++) {
+                double misRate = (residualsErrorBits[i] == 0) ? 0.0 : ((double) errorCorrectionBits[i] / residualsErrorBits[i]);
+
+                // ※元の「列順・内容」は同じ（表示形式だけ修正）
+                // 末尾の空カラム（",,"）も元コードと同じく維持
+                pw.printf("%.2f,%.8e,%.10e,%.8e,%.8e,%d,%.8e,%.4f,%.4f,%.8e,(%d/%d),%.6f,,\n",
+                        eValues[i],
+                        aveChannelBitErrorRate[i],
+                        varianceChannelBitError[i],
+                        frameErrorRate[i],
+                        informationFrameErrorRate[i],
+                        undetectedErrors[i],
+                        infoBitErrorRate[i],
+                        averageTrueIterations[i],
+                        averageFalseIterations[i],
+                        misRate,
+                        errorCorrectionBits[i],
+                        residualsErrorBits[i],
+                        decodeTimes[i]);
             }
+
             pw.printf("\n以下は反復回数の度数分布\n");
             pw.printf("回数\\通信路誤り率,");
-            for (double eValue : eValues) pw.printf("%s,", eValue);
+            for (double eValue : eValues) pw.printf("%.2f,", eValue);
             pw.printf("\n");
-            for(int i = 0;i < maxL;i++){
-                pw.printf("%s,",i);
-                for(int k = 0;k < eValues.length;k++)pw.printf("%s,",iterationDistribution[k][i]);
+
+            for (int i = 0; i < maxL; i++) {
+                pw.printf("%d,", i);
+                for (int k = 0; k < eValues.length; k++) pw.printf("%d,", iterationDistribution[k][i]);
                 pw.printf("\n");
             }
+
+            // ===== 最終スコア（追記）=====
+            pw.printf("\n最終スコア（小さいほど良い）\n");
+            pw.printf("Score,AvgLogFER,AvgLogIBER,AvgIter,AvgDecodeTime(m)\n");
+            pw.printf("%.6f,%.6f,%.6f,%.6f,%.6f\n", score, avgLogFER, avgLogIBER, avgIter, avgDecodeTime);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 }
