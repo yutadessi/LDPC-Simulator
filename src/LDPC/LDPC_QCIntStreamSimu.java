@@ -12,7 +12,7 @@ public class LDPC_QCIntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "8-4(10_000)QC-LOGT";
+        String fileNAMEME = "8-4(10_000)QC-LOG";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv"; //結果保存ファイル名
 
@@ -28,7 +28,7 @@ public class LDPC_QCIntStreamSimu {
         int numCM = 50;
 
         //通信路誤り率eの集合
-        double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1};
+        double[] eValues = {0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21};
 //            double[] e = {0.05};
 
         //タイム計測用配列
