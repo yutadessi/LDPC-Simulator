@@ -12,7 +12,7 @@ public class LDPC_LoadIntStream {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "8-4(10_000)QC-LOGT8";
+        String fileNAMEME = "8-4(10_000)Gallager-Log30";
         //------------------------------
 
         String fileNames = fileNAMEME + "-LoadHResult.csv";
@@ -53,6 +53,8 @@ public class LDPC_LoadIntStream {
         int [][] h = CheckMatrixIO.loadCheckMatrix(filePath);
         int [][] g = GenerateMatrix.generatorMatrix(h);
 
+        int gLength = g.length;
+
         int n = h[0].length;
         int wr = 0;
         for(int i = 0;i < n;i++){
@@ -90,13 +92,13 @@ public class LDPC_LoadIntStream {
 
                 //メッセージと送信語、受信語の作成
                 int[] c = GenerateC.geneC(encodedG);
-                int[] r = Channel.GenerateR(c,eValues[eIndex]);
+                int[] r = Channel.GenerateR(c,eValues[eIndex],gLength);
 
                 //フレームごとの情報ビットの正誤
                 int currentInfoFrameErrorBits = 0;
 
                 //実際の通信路での誤り率の取得
-                actualChannelBitErrorRate[eIndex][frame] = Channel.CheckError(c,r);
+                actualChannelBitErrorRate[eIndex][frame] = Channel.CheckError(c,r,gLength);
 
                 //情報ビットの非誤りビットのインデックス
                 List<Integer> noErrorBitIndex = new ArrayList<>();
@@ -200,38 +202,6 @@ public class LDPC_LoadIntStream {
             varianceChannelBitError[j] /= numFrames;
         }
 
-        // ===== 最終スコア計算（小さいほど良い）=====
-        final double eps = 1e-12;
-
-        double sumLogFER = 0.0;
-        double sumLogIBER = 0.0;
-        double sumIterAll = 0.0;
-        double sumDecTime = 0.0;
-
-        for (int ei = 0; ei < eValues.length; ei++) {
-            sumLogFER  += Math.log10(frameErrorRate[ei] + eps);
-            sumLogIBER += Math.log10(infoBitErrorRate[ei] + eps);
-
-            double iterSum = 0.0;
-            for (int it = 0; it < maxL; it++) {
-                iterSum += (it + 1) * iterationDistribution[ei][it];
-            }
-            double avgIterAll = iterSum / numFrames;   // 全フレーム平均反復回数
-            sumIterAll += avgIterAll;
-
-            sumDecTime += decodeTimes[ei];
-        }
-
-        double avgLogFER = sumLogFER / eValues.length;
-        double avgLogIBER = sumLogIBER / eValues.length;
-        double avgIter = sumIterAll / eValues.length;
-        double avgDecodeTime = sumDecTime / eValues.length;
-
-        // RawScore（単一行列版）
-        double score = 0.55 * avgLogFER + 0.25 * avgLogIBER + 0.10 * avgIter + 0.10 * avgDecodeTime;
-
-
-
         //ファイルへの書き出し
         try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
 
@@ -277,12 +247,6 @@ public class LDPC_LoadIntStream {
                 for (int k = 0; k < eValues.length; k++) pw.printf("%d,", iterationDistribution[k][i]);
                 pw.printf("\n");
             }
-
-            // ===== 最終スコア（追記）=====
-            pw.printf("\n最終スコア（小さいほど良い）\n");
-            pw.printf("Score,AvgLogFER,AvgLogIBER,AvgIter,AvgDecodeTime(m)\n");
-            pw.printf("%.6f,%.6f,%.6f,%.6f,%.6f\n", score, avgLogFER, avgLogIBER, avgIter, avgDecodeTime);
-
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -63,6 +63,8 @@ public class LDPC_QCIntStreamSimu {
             int [][] h = GenerateMatrix.generateQC(z,mb,nb);
             int [][] g = GenerateMatrix.generatorMatrix(h);
 
+            int gLength = g.length;
+
             //検査行列を保存
             String filePath = fileNAMEME + column + "-HMatrix.txt"; //検査行列保存ファイル名
             CheckMatrixIO.saveCheckMatrix(h,filePath);
@@ -94,13 +96,13 @@ public class LDPC_QCIntStreamSimu {
 
                     //メッセージと送信語、受信語の作成
                     int[] c = GenerateC.geneC(encodedG);
-                    int[] r = Channel.GenerateR(c,eValues[eIndex]);
+                    int[] r = Channel.GenerateR(c,eValues[eIndex],gLength);
 
                     //フレームごとの情報ビットの正誤
                     int currentInfoFrameErrorBits = 0;
 
                     //実際の通信路での誤り率の取得
-                    actualChannelBitErrorRate[cIndex][eIndex][frame] = Channel.CheckError(c,r);
+                    actualChannelBitErrorRate[cIndex][eIndex][frame] = Channel.CheckError(c,r,gLength);
 
                     //情報ビットの非誤りビットのインデックス
                     List<Integer> noErrorBitIndex = new ArrayList<>();
@@ -205,97 +207,6 @@ public class LDPC_QCIntStreamSimu {
             }
         }
 
-        // ===== 最終スコア計算（小さいほど良い） =====
-        final double eps = 1e-15;
-
-        // eValues方向に集約した特徴量（cmごと）
-        double[] avgLogFER_CM = new double[numCM];
-        double[] avgLogIBER_CM = new double[numCM];
-        double[] avgIter_CM = new double[numCM];
-        double[] avgTime_CM = new double[numCM];
-
-        for (int cm = 0; cm < numCM; cm++) {
-            double sLogFer = 0.0, sLogIber = 0.0, sIter = 0.0, sTime = 0.0;
-
-            for (int ei = 0; ei < eValues.length; ei++) {
-                sLogFer += Math.log10(frameErrorRate[cm][ei] + eps);
-                sLogIber += Math.log10(infoBitErrorRate[cm][ei] + eps);
-                // 全フレームの平均反復回数（成功/失敗に依存せず必ず定義できる）
-                int iterSum = 0;
-                for (int it = 0; it < maxL; it++) {
-                    iterSum += (it + 1) * iterationDistribution[cm][ei][it]; // it=0 が 1回
-                }
-                double avgIterAll = (double) iterSum / numFrames;
-                sIter += avgIterAll;
-                sTime += decodeTimes[cm][ei];
-            }
-
-            int m = eValues.length;
-            avgLogFER_CM[cm] = sLogFer / m;
-            avgLogIBER_CM[cm] = sLogIber / m;
-            avgIter_CM[cm] = sIter / m;
-            avgTime_CM[cm] = sTime / m;
-        }
-
-        // min-max 正規化（0..1）
-        double minFer = Double.POSITIVE_INFINITY, maxFer = Double.NEGATIVE_INFINITY;
-        double minIber = Double.POSITIVE_INFINITY, maxIber = Double.NEGATIVE_INFINITY;
-        double minIter = Double.POSITIVE_INFINITY, maxIter = Double.NEGATIVE_INFINITY;
-        double minTime = Double.POSITIVE_INFINITY, maxTime = Double.NEGATIVE_INFINITY;
-
-        for (int cm = 0; cm < numCM; cm++) {
-            if (avgLogFER_CM[cm] < minFer) minFer = avgLogFER_CM[cm];
-            if (avgLogFER_CM[cm] > maxFer) maxFer = avgLogFER_CM[cm];
-
-            if (avgLogIBER_CM[cm] < minIber) minIber = avgLogIBER_CM[cm];
-            if (avgLogIBER_CM[cm] > maxIber) maxIber = avgLogIBER_CM[cm];
-
-            if (avgIter_CM[cm] < minIter) minIter = avgIter_CM[cm];
-            if (avgIter_CM[cm] > maxIter) maxIter = avgIter_CM[cm];
-
-            if (avgTime_CM[cm] < minTime) minTime = avgTime_CM[cm];
-            if (avgTime_CM[cm] > maxTime) maxTime = avgTime_CM[cm];
-        }
-
-        double rangeFer = maxFer - minFer;
-        double rangeIber = maxIber - minIber;
-        double rangeIter = maxIter - minIter;
-        double rangeTime = maxTime - minTime;
-
-        double[] score_CM = new double[numCM];
-
-        for (int cm = 0; cm < numCM; cm++) {
-            double nFer  = (rangeFer  == 0.0) ? 0.0 : (avgLogFER_CM[cm]  - minFer)  / rangeFer;
-            double nIber = (rangeIber == 0.0) ? 0.0 : (avgLogIBER_CM[cm] - minIber) / rangeIber;
-            double nIter = (rangeIter == 0.0) ? 0.0 : (avgIter_CM[cm]    - minIter) / rangeIter;
-            double nTime = (rangeTime == 0.0) ? 0.0 : (avgTime_CM[cm]    - minTime) / rangeTime;
-
-            // 重み（必要なら調整）
-            score_CM[cm] = 0.55 * nFer + 0.25 * nIber + 0.10 * nIter + 0.10 * nTime;
-        }
-
-        // Score の統計（平均/最小/最大/分散）と最良行列番号
-        double sumScore = 0.0;
-        double minScore = Double.POSITIVE_INFINITY;
-        double maxScore = Double.NEGATIVE_INFINITY;
-        int bestCM = -1;
-
-        for (int cm = 0; cm < numCM; cm++) {
-            double s = score_CM[cm];
-            sumScore += s;
-            if (s < minScore) { minScore = s; bestCM = cm; }
-            if (s > maxScore) maxScore = s;
-        }
-        double meanScore = sumScore / numCM;
-
-        double varScore = 0.0;
-        for (int cm = 0; cm < numCM; cm++) {
-            double d = score_CM[cm] - meanScore;
-            varScore += d * d;
-        }
-        varScore /= numCM; // 母分散
-
-
         //ファイルへの書き出し
         try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
 
@@ -353,17 +264,6 @@ public class LDPC_QCIntStreamSimu {
                 }
                 pw.printf("\n");
             }
-
-            // ===== 最終スコア（追記） =====
-            pw.printf("\n最終スコア（小さいほど良い）\n");
-            pw.printf("行列番号,Score,AvgLogFER,AvgLogIBER,AvgIter,AvgDecodeTime(m)\n");
-            for (int cm = 0; cm < numCM; cm++) {
-                pw.printf("%d,%.6f,%.6f,%.6f,%.4f,%.6f\n",
-                        cm, score_CM[cm], avgLogFER_CM[cm], avgLogIBER_CM[cm], avgIter_CM[cm], avgTime_CM[cm]);
-            }
-            pw.printf("Score統計,mean=%.6f,min=%.6f,max=%.6f,var=%.6f,bestCM=%d\n",
-                    meanScore, minScore, maxScore, varScore, bestCM);
-
         } catch (IOException e) {
             e.printStackTrace();
         }

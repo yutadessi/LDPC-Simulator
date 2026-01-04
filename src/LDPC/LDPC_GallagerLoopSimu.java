@@ -56,6 +56,8 @@ public class LDPC_GallagerLoopSimu {
             int [][] h = GenerateMatrix.gallagerCheckMatrix(n,wr,wc[column]);
             int [][] g = GenerateMatrix.generatorMatrix(h);
 
+            int gLength = g.length;
+
             //検査行列を保存
             String filePath = fileNAMEME + column + "-HMatrix.txt"; //検査行列保存ファイル名
             CheckMatrixIO.saveCheckMatrix(h,filePath);
@@ -80,13 +82,13 @@ public class LDPC_GallagerLoopSimu {
                 for(int frame = 0;frame < numFrames;frame++){
                      //メッセージと送信語、受信語の作成
                     int[] c = GenerateC.geneC(encodedG);
-                    int[] r = Channel.GenerateR(c,eValues[errorRate]);
+                    int[] r = Channel.GenerateR(c,eValues[errorRate],gLength);
 
                     //フレームごとの情報ビットの正誤
                     int currentInfoFrameErrorBits = 0;
 
                     //実際の通信路での誤り率の取得
-                    actualChannelBitErrorRate[column][errorRate][frame] = Channel.CheckError(c,r);
+                    actualChannelBitErrorRate[column][errorRate][frame] = Channel.CheckError(c,r,gLength);
 
                     //情報ビットの非誤りビットのインデックス
                     List<Integer> noErrorBitIndex = new ArrayList<>();
