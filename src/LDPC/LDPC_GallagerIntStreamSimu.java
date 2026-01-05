@@ -12,7 +12,7 @@ public class LDPC_GallagerIntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "8-4(10_000)G-Log";
+        String fileNAMEME = "8-4(10_000-5)G-Log";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv";
 
@@ -24,10 +24,10 @@ public class LDPC_GallagerIntStreamSimu {
         int numFrames = 10_000; //フレーム数
 
         //検査行列作成数
-        int numCM = 50;
+        int numCM = 5;
 
         //通信路誤り率eの集合
-        double[] eValues = {0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21};
+        double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15};
 //            double[] e = {0.05};
 
         //タイム計測用配列
@@ -40,11 +40,13 @@ public class LDPC_GallagerIntStreamSimu {
         double[][] aveChannelBitErrorRate = new double[numCM][eValues.length]; //各誤り率における実際の通信路誤り率の平均
         double[][] varianceChannelBitError = new double[numCM][eValues.length]; //各誤り率における実際の通信路誤り率の分散
         double[][] frameErrorRate = new double[numCM][eValues.length]; //FER(符号長の失敗確率)
-        double[][] informationFrameErrorRate = new double[numCM][eValues.length]; //IFER(情報ビットのみの失敗率率）
+        double[][] informationFrameErrorRate = new double[numCM][eValues.length]; //IFER(情報ビットのみの失敗確率）
+        double[][] checkFrameErrorRate = new double[numCM][eValues.length]; //CFER(検査ビットのみの失敗確率）
         double[][] infoBitErrorRate = new double[numCM][eValues.length]; //IBER(Info Bit Error Rate)
         double[][] averageTrueIterations = new double[numCM][eValues.length]; //訂正成功時の平均繰り返し回数
         double[][] averageFalseIterations = new double[numCM][eValues.length]; //訂正失敗時の平均繰り返し回数
-        int[][] residualsErrorBits = new int[numCM][eValues.length]; //情報ビットの残留誤りビット数
+        int[][] residualsErrorInfoBits = new int[numCM][eValues.length]; //情報ビットの残留誤りビット数
+        double[][] avgErrorCheckBits = new double[numCM][eValues.length]; //検査ビットの残留誤りビット数
         int[][] errorCorrectionBits = new int[numCM][eValues.length]; //情報ビットの誤訂正ビット数
         int[][][] iterationDistribution = new int[numCM][eValues.length][maxL]; //反復回数の度数分布
         int[][] undetectedErrors = new int[numCM][eValues.length]; //シンドロームは0だが,誤訂正している数
@@ -86,7 +88,10 @@ public class LDPC_GallagerIntStreamSimu {
                 int[] trueIterations = new int[2];
                 int[] falseIterations = new int[2];
 
-                final int[] errorInfoBitsCounter = {0};
+                final int[] errorInfoFrameCounter = {0};
+                final int[] errorCheckFrameCounter = {0};
+
+                final int[] errorCheckBitsCounter = {0};
 
                 Object lock = new Object();
 
@@ -99,6 +104,7 @@ public class LDPC_GallagerIntStreamSimu {
 
                     //フレームごとの情報ビットの正誤
                     int currentInfoFrameErrorBits = 0;
+                    int currentCheckFrameErrorBits = 0;
 
                     //実際の通信路での誤り率の取得
                     actualChannelBitErrorRate[cIndex][eIndex][frame] = Channel.CheckError(c,r,gLength);
@@ -146,10 +152,10 @@ public class LDPC_GallagerIntStreamSimu {
                             falseIterations[1] ++;
                         }
 
-                        //残留誤りビットと誤訂正ビットの加算
+                        //情報ビットの残留誤りビットと誤訂正ビットの加算
                         for(int z = 0;z < g.length;z++){
                             if(c[z] != decodedC[z]){
-                                residualsErrorBits[cIndex][eIndex] ++;
+                                residualsErrorInfoBits[cIndex][eIndex] ++;
                                 currentInfoFrameErrorBits++;
                             }
                         }
@@ -157,8 +163,17 @@ public class LDPC_GallagerIntStreamSimu {
                             if(c[x] != decodedC[x])errorCorrectionBits[cIndex][eIndex] ++;
                         }
 
+                        //検査ビットの正誤判定
+                        for(int z = g.length;z < n;z++){
+                            if(c[z] != decodedC[z]){
+                                errorCheckBitsCounter[0] ++;
+                                currentCheckFrameErrorBits++;
+                            }
+                        }
+                        if(currentCheckFrameErrorBits != 0) errorCheckFrameCounter[0]++;
+
                         //情報ビットの正誤
-                        if(currentInfoFrameErrorBits != 0) errorInfoBitsCounter[0]++;
+                        if(currentInfoFrameErrorBits != 0) errorInfoFrameCounter[0]++;
 
                         //実際の誤り率の加算
                         sumChannelBitError[cIndex][eIndex] += actualChannelBitErrorRate[cIndex][eIndex][frame];
@@ -182,10 +197,16 @@ public class LDPC_GallagerIntStreamSimu {
                 frameErrorRate[column][errorRate] = (double)falseIterations[1]/numFrames;
 
                 //IBER
-                infoBitErrorRate[column][errorRate] = (double)residualsErrorBits[column][errorRate] / (g.length * numFrames);
+                infoBitErrorRate[column][errorRate] = (double)residualsErrorInfoBits[column][errorRate] / (g.length * numFrames);
 
                 //IFER
-                informationFrameErrorRate[column][errorRate] = (double)errorInfoBitsCounter[0]/numFrames;
+                informationFrameErrorRate[column][errorRate] = (double)errorInfoFrameCounter[0]/numFrames;
+
+                //CFER
+                checkFrameErrorRate[column][errorRate] = (double)errorCheckFrameCounter[0]/numFrames;
+
+                //平均検査ビット誤り数
+                avgErrorCheckBits[column][errorRate] = (double)errorCheckBitsCounter[0]/errorCheckFrameCounter[0];
 
                 //実際の誤り率の平均
                 aveChannelBitErrorRate[column][errorRate] = sumChannelBitError[column][errorRate]/numFrames;
@@ -209,35 +230,37 @@ public class LDPC_GallagerIntStreamSimu {
         //ファイルへの書き出し
         try (PrintWriter pw = new PrintWriter(fileNames, Charset.forName("Windows-31j"))){
 
-            for(int i = 0;i < numCM;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,,,","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)","行列番号");
+            for(int i = 0;i < numCM;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,,,,,","符号長","行重み","列重み","符号化率","最大反復回数","フレーム数","全体時間(m)","合計復号時間(m)","復号割合(%)","行列番号");
             pw.printf("\n");
 
-            for(int i = 0;i < numCM;i++) pw.printf("%d,%d,%d,%.6f,%d,%d,%.2f,%.2f,%.2f,%d,,,,",
+            for(int i = 0;i < numCM;i++) pw.printf("%d,%d,%d,%.6f,%d,%d,%.2f,%.2f,%.2f,%d,,,,,,",
                     n,wr,wc,(1-(double)wc/wr),maxL,numFrames,executionTimes[i][0],executionTimes[i][1],executionTimes[i][2],i);
             pw.printf("\n\n");
 
-            for(int i = 0;i < numCM;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
-                    "FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
+            for(int i = 0;i < numCM;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
+                    "FER","IFER","CFER","平均誤り検査ビット数","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
             pw.printf("\n");
 
             for(int i = 0;i < eValues.length;i++){
                 for(int j = 0;j < numCM;j++){
 
-                    double misRate = (residualsErrorBits[j][i] == 0) ? 0.0 : ((double)errorCorrectionBits[j][i] / residualsErrorBits[j][i]);
+                    double misRate = (residualsErrorInfoBits[j][i] == 0) ? 0.0 : ((double)errorCorrectionBits[j][i] / residualsErrorInfoBits[j][i]);
 
-                    pw.printf("%.2f,%.6e,%.10e,%.6e,%.6e,%d,%.6e,%.4f,%.4f,%.6e,(%d/%d),%.2f,,",
+                    pw.printf("%.2f,%.6e,%.10e,%.6e,%.6e,%6e,%10e,%d,%.6e,%.4f,%.4f,%.6e,(%d/%d),%.2f,,",
                             eValues[i],
                             aveChannelBitErrorRate[j][i],
                             varianceChannelBitError[j][i],
                             frameErrorRate[j][i],
                             informationFrameErrorRate[j][i],
+                            checkFrameErrorRate[j][i],
+                            avgErrorCheckBits[j][i],
                             undetectedErrors[j][i],
                             infoBitErrorRate[j][i],
                             averageTrueIterations[j][i],
                             averageFalseIterations[j][i],
                             misRate,
                             errorCorrectionBits[j][i],
-                            residualsErrorBits[j][i],
+                            residualsErrorInfoBits[j][i],
                             decodeTimes[j][i]);
                 }
                 pw.printf("\n");
