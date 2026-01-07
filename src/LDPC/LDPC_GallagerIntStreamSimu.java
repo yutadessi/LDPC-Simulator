@@ -12,23 +12,23 @@ public class LDPC_GallagerIntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "8-4(10_000-5)G-Log";
+        String fileNAMEME = "final10-2(10_000-25)G-Log";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv";
 
         //符号パラメータ
-        int n = 1024; //符号長
-        int wr = 8; //行重み(n % wr = 0)
-        int wc = 4; //列重み
+        int n = 1020; //符号長
+        int wr = 10; //行重み(n % wr = 0)
+        int wc = 5; //列重み
         int maxL = 50; //最大反復回数
         int numFrames = 10_000; //フレーム数
 
         //検査行列作成数
-        int numCM = 5;
+        int numCM = 25;
 
         //通信路誤り率eの集合
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15};
-//            double[] e = {0.05};
+//            double[] e = 0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,
 
         //タイム計測用配列
         double[][] executionTimes = new double[numCM][3]; //トータルの実行時間
@@ -280,7 +280,7 @@ public class LDPC_GallagerIntStreamSimu {
                 for(int j = 0;j < numCM;j++){
                     pw.printf("%d,",i);
                     for(int k = 0;k < eValues.length;k++){
-                        pw.printf("%d,",(int)iterationDistribution[j][k][i]); // int化してなくても動くようにキャスト
+                        pw.printf("%d,",iterationDistribution[j][k][i]);
                     }
                     pw.printf(",,");
                 }
@@ -290,32 +290,4 @@ public class LDPC_GallagerIntStreamSimu {
             e.printStackTrace();
         }
     }
-    static double mean(double[] a) {
-        double s = 0;
-        for (double v : a) s += v;
-        return s / a.length;
-    }
-
-    static double variance(double[] a) {
-        double m = mean(a);
-        double s = 0;
-        for (double v : a) {
-            double d = v - m;
-            s += d * d;
-        }
-        return s / a.length; // 母分散
-    }
-
-    static double min(double[] a) {
-        double m = Double.POSITIVE_INFINITY;
-        for (double v : a) if (v < m) m = v;
-        return m;
-    }
-
-    static double max(double[] a) {
-        double m = Double.NEGATIVE_INFINITY;
-        for (double v : a) if (v > m) m = v;
-        return m;
-    }
-
 }

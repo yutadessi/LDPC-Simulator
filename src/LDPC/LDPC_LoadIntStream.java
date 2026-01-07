@@ -219,8 +219,6 @@ public class LDPC_LoadIntStream {
             for (int i = 0; i < eValues.length; i++) {
                 double misRate = (residualsErrorBits[i] == 0) ? 0.0 : ((double) errorCorrectionBits[i] / residualsErrorBits[i]);
 
-                // ※元の「列順・内容」は同じ（表示形式だけ修正）
-                // 末尾の空カラム（",,"）も元コードと同じく維持
                 pw.printf("%.2f,%.8e,%.10e,%.8e,%.8e,%d,%.8e,%.4f,%.4f,%.8e,(%d/%d),%.6f,,\n",
                         eValues[i],
                         aveChannelBitErrorRate[i],
