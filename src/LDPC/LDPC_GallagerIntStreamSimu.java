@@ -12,14 +12,14 @@ public class LDPC_GallagerIntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "final10-2(10_000-25)G-Log";
+        String fileNAMEME = "final8-2(10_000-25)G-Log";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv";
 
         //符号パラメータ
-        int n = 1020; //符号長
-        int wr = 10; //行重み(n % wr = 0)
-        int wc = 5; //列重み
+        int n = 1024; //符号長
+        int wr = 8; //行重み(n % wr = 0)
+        int wc = 2; //列重み
         int maxL = 50; //最大反復回数
         int numFrames = 10_000; //フレーム数
 
@@ -27,8 +27,8 @@ public class LDPC_GallagerIntStreamSimu {
         int numCM = 25;
 
         //通信路誤り率eの集合
-        double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15};
-//            double[] e = 0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,
+        double[] eValues = {0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,0.02,0.03,0.04,0.05};
+//            double[] e = 0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15
 
         //タイム計測用配列
         double[][] executionTimes = new double[numCM][3]; //トータルの実行時間
@@ -246,7 +246,7 @@ public class LDPC_GallagerIntStreamSimu {
 
                     double misRate = (residualsErrorInfoBits[j][i] == 0) ? 0.0 : ((double)errorCorrectionBits[j][i] / residualsErrorInfoBits[j][i]);
 
-                    pw.printf("%.2f,%.6e,%.10e,%.6e,%.6e,%6e,%10e,%d,%.6e,%.4f,%.4f,%.6e,(%d/%d),%.2f,,",
+                    pw.printf("%.3f,%.6e,%.10e,%.6e,%.6e,%6e,%10e,%d,%.6e,%.4f,%.4f,%.6e,(%d/%d),%.2f,,",
                             eValues[i],
                             aveChannelBitErrorRate[j][i],
                             varianceChannelBitError[j][i],

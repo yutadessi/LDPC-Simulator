@@ -103,7 +103,7 @@ public class GenerateMatrix {
 
             fails = false;
 
-            // --- 条件1：各行の非-1要素 ≥ 2 ---
+            //条件1：各行の非-1要素 ≥ 2
             for (int i = 0; i < mb; i++) {
                 int count = 0;
                 for (int j = 0; j < nb; j++) {
@@ -115,7 +115,7 @@ public class GenerateMatrix {
                 }
             }
 
-            // --- 条件2：各列の非-1要素 ≥ 2 ---
+            //条件2：各列の非-1要素 ≥ 2
             if (!fails) {
                 for (int j = 0; j < nb; j++) {
                     int count = 0;
@@ -129,7 +129,7 @@ public class GenerateMatrix {
                 }
             }
 
-            // --- 条件3：4-cycle チェック ---
+            //条件3：4-cycle チェック
             if (!fails && has4Cycle(baseM, z)) {
                 fails = true;
             }

@@ -15,6 +15,8 @@ public class MinSumDecoder {
         int numV = encodedH[0].length;
         int sumSyndro = 0;
 
+        int gLength = encodedH[0].length - encodedH.length;
+
         //インデックスA,B
         List<List<Integer>> A = new ArrayList<>(numC); // A(i)
         for (int i = 0; i < numC; i++) {
@@ -36,9 +38,13 @@ public class MinSumDecoder {
         //対数尤度比λ
         double[] lambda = new double[r.length];
         double l0 = Math.log((1 - e) / e);
+        double l1 = Math.log((1 - 0.0000001) / 0.0000001);
 
-        for(int j = 0;j < r.length;j++){
+        for(int j = 0;j < gLength;j++){
             lambda[j] = (r[j] == 0) ? l0 : -l0;
+        }
+        for(int j = gLength;j < r.length;j++){
+            lambda[j] = (r[j] == 0) ? l1 : -l1;
         }
 
         //対数領域メッセージα,β

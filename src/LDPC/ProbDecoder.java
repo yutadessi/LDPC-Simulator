@@ -137,12 +137,10 @@ public class ProbDecoder {
                 sumSyndro += syndrome[m];
             }
             if(sumSyndro == 0){
-//                System.out.println("反復回数" + (l + 1) + "でパリティ検査通過");
                 return new DecodingResult(estimatedC,l + 1,sumSyndro);
             }
 
         }
-//        System.out.println("最大反復回数" + maxL + "に到達しました。");
         return new DecodingResult(estimatedC,maxL,sumSyndro);
     }
 }

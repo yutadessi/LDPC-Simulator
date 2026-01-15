@@ -12,19 +12,19 @@ public class LDPC_LoadIntStream {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "8-4(10_000)Gallager-Log30";
+        String fileNAMEME = "final8-3(10_000-25)QC-Log16";
         //------------------------------
 
-        String fileNames = fileNAMEME + "-LoadHResult.csv";
+        String fileNames = fileNAMEME + "-LoadHLResult.csv";
         String filePath = fileNAMEME + "-HMatrix.txt";
 
         //符号パラメーター
-        int maxL = 50; //最大反復回数
+        int maxL = 20; //最大反復回数
         int numFrames = 100_000; //フレーム数
 
         //通信路誤り率eの設定
-        double[] eValues = {0.10,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21,0.22};
-//        double[] eValues = {0.03};
+        double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15};
+//        double[] eValues = 0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15
 
         //タイム計測用配列
         double[] executionTimes = new double[3]; //トータルの実行時間
@@ -37,10 +37,12 @@ public class LDPC_LoadIntStream {
         double[] varianceChannelBitError = new double[eValues.length]; //各誤り率における実際の通信路誤り率の分散
         double[] frameErrorRate = new double[eValues.length]; //FER(符号長の失敗確率)
         double[] informationFrameErrorRate = new double[eValues.length]; //IFER(情報ビットのみの失敗率率）
+        double[] checkFrameErrorRate = new double[eValues.length]; //CFER(検査ビットのみの失敗確率）
         double[] infoBitErrorRate = new double[eValues.length]; //IBER(Info Bit Error Rate)
         double[] averageTrueIterations = new double[eValues.length]; //訂正成功時の平均繰り返し回数
         double[] averageFalseIterations = new double[eValues.length]; //訂正失敗時の平均繰り返し回数
         int[] residualsErrorBits = new int[eValues.length]; //情報ビットの残留誤りビット数
+        double[] avgErrorCheckBits = new double[eValues.length]; //検査ビットの残留誤りビット数
         int[] errorCorrectionBits = new int[eValues.length]; //情報ビットの誤訂正ビット数
         int[][] iterationDistribution = new int[eValues.length][maxL]; //反復回数の度数分布
         int[] undetectedErrors = new int[eValues.length]; //シンドロームは0だが,誤訂正している数
@@ -84,6 +86,9 @@ public class LDPC_LoadIntStream {
             int[] falseIterations = new int[2];
 
             final int[] errorInfoBitsCounter = {0};
+            final int[] errorCheckFrameCounter = {0};
+
+            final int[] errorCheckBitsCounter = {0};
 
             Object lock = new Object();
 
@@ -96,6 +101,7 @@ public class LDPC_LoadIntStream {
 
                 //フレームごとの情報ビットの正誤
                 int currentInfoFrameErrorBits = 0;
+                int currentCheckFrameErrorBits = 0;
 
                 //実際の通信路での誤り率の取得
                 actualChannelBitErrorRate[eIndex][frame] = Channel.CheckError(c,r,gLength);
@@ -111,8 +117,8 @@ public class LDPC_LoadIntStream {
 
                 //対数領域sum-product復号,確率領域sum-product復号法,Min-Sum復号法
                 LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,eValues[eIndex],maxL);
-//                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[eIndex],maxL);
-//                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[eIndex],maxL);
+//                ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[eIndex],maxL);
+//                MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[eIndex],maxL);
 
                 //復号時間計測終了時間
                 long endDecode = System.nanoTime();
@@ -154,6 +160,15 @@ public class LDPC_LoadIntStream {
                         if(c[x] != decodedC[x])errorCorrectionBits[eIndex] ++;
                     }
 
+                    //検査ビットの正誤判定
+                    for(int x = g.length;x < n;x++){
+                        if(c[x] != decodedC[x]){
+                            errorCheckBitsCounter[0] ++;
+                            currentCheckFrameErrorBits++;
+                        }
+                    }
+                    if(currentCheckFrameErrorBits != 0) errorCheckFrameCounter[0]++;
+
                     //情報ビットの正誤
                     if(currentInfoFrameErrorBits != 0) errorInfoBitsCounter[0]++;
 
@@ -185,6 +200,12 @@ public class LDPC_LoadIntStream {
             //IFER
             informationFrameErrorRate[errorRate] = (double)errorInfoBitsCounter[0]/numFrames;
 
+            //CFER
+            checkFrameErrorRate[errorRate] = (double)errorCheckFrameCounter[0]/numFrames;
+
+            //平均検査ビット誤り数
+            avgErrorCheckBits[errorRate] = (double)errorCheckBitsCounter[0]/errorCheckFrameCounter[0];
+
             //実際の誤り率の平均
             aveChannelBitErrorRate[errorRate] = sumChannelBitError[errorRate]/numFrames;
         }
@@ -213,18 +234,21 @@ public class LDPC_LoadIntStream {
 
             pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                     "通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
-                    "FER","IFER","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数",
+                    "FER","IFER","CFER","平均誤り検査ビット数","s=0だが誤訂正","IBER",
+                    "成功時の平均繰り返し回数","失敗時の平均繰り返し回数",
                     "平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
 
             for (int i = 0; i < eValues.length; i++) {
                 double misRate = (residualsErrorBits[i] == 0) ? 0.0 : ((double) errorCorrectionBits[i] / residualsErrorBits[i]);
 
-                pw.printf("%.2f,%.8e,%.10e,%.8e,%.8e,%d,%.8e,%.4f,%.4f,%.8e,(%d/%d),%.6f,,\n",
+                pw.printf("%.3f,%.8e,%.10e,%.8e,%.8e,%.8e,%.8e,%d,%.8e,%.4f,%.4f,%.8e,(%d/%d),%.6f,,\n",
                         eValues[i],
                         aveChannelBitErrorRate[i],
                         varianceChannelBitError[i],
                         frameErrorRate[i],
                         informationFrameErrorRate[i],
+                        checkFrameErrorRate[i],
+                        avgErrorCheckBits[i],
                         undetectedErrors[i],
                         infoBitErrorRate[i],
                         averageTrueIterations[i],

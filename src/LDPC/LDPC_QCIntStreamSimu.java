@@ -12,13 +12,13 @@ public class LDPC_QCIntStreamSimu {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "final10-2(10_000-25)QC-Log";
+        String fileNAMEME = "final8-2(10_000-25)QC-Log";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv"; //結果保存ファイル名
 
         //符号パラメータ
-        int z = 102;
-        int nb = 10; //行重み(n % wr = 0)
+        int z = 128;
+        int nb = 8; //行重み(n % wr = 0)
         int mb = 2; //列重み
         int n = z * nb; //符号長
         int maxL = 50; //最大反復回数
@@ -28,8 +28,8 @@ public class LDPC_QCIntStreamSimu {
         int numCM = 25;
 
         //通信路誤り率eの集合
-        double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15};
-//            double[] e = {0.05};
+        double[] eValues = {0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,0.02,0.03,0.04,0.05};
+//            double[] e = 0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15
 
         //タイム計測用配列
         double[][] executionTimes = new double[numCM][3]; //トータルの実行時間
@@ -239,8 +239,12 @@ public class LDPC_QCIntStreamSimu {
                     n,nb,mb,(1-(double)mb/nb),maxL,numFrames,executionTimes[i][0],executionTimes[i][1],executionTimes[i][2],i);
             pw.printf("\n\n");
 
-            for(int i = 0;i < numCM;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,","通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
-                    "FER","IFER","CFER","平均誤り検査ビット数","s=0だが誤訂正","IBER","成功時の平均繰り返し回数","失敗時の平均繰り返し回数","平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
+            for(int i = 0;i < numCM;i++)pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,,",
+                    "通信路誤り率","実際の通信路誤り率の平均","実際の通信路誤り率の分散",
+                    "FER","IFER","CFER","平均誤り検査ビット数","s=0だが誤訂正","IBER",
+                    "成功時の平均繰り返し回数","失敗時の平均繰り返し回数",
+                    "平均誤訂正ビット率","誤訂正ビット/残留ビット","各誤り率の復号時間(m)");
+
             pw.printf("\n");
 
             for(int i = 0;i < eValues.length;i++){
@@ -248,7 +252,7 @@ public class LDPC_QCIntStreamSimu {
 
                     double misRate = (residualsErrorInfoBits[j][i] == 0) ? 0.0 : ((double)errorCorrectionBits[j][i] / residualsErrorInfoBits[j][i]);
 
-                    pw.printf("%.2f,%.6e,%.10e,%.6e,%.6e,%6e,%10e,%d,%.6e,%.4f,%.4f,%.6e,(%d/%d),%.2f,,",
+                    pw.printf("%.3f,%.6e,%.10e,%.6e,%.6e,%6e,%10e,%d,%.6e,%.4f,%.4f,%.6e,(%d/%d),%.2f,,",
                             eValues[i],
                             aveChannelBitErrorRate[j][i],
                             varianceChannelBitError[j][i],
