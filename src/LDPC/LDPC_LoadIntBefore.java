@@ -8,11 +8,11 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.stream.IntStream;
 
-public class LDPC_LoadIntStream {
+public class LDPC_LoadIntBefore {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "final6-3(10_000-25)QC-Log1";
+        String fileNAMEME = "final10-5(10_000-25)QC-LOG16";
         //------------------------------
 
         String fileNames = fileNAMEME + "-LoadHLResult.csv";
@@ -20,11 +20,11 @@ public class LDPC_LoadIntStream {
 
         //符号パラメーター
         int maxL = 50; //最大反復回数
-        int numFrames = 100_000; //フレーム数
+        int numFrames = 10_000; //フレーム数
 
         //通信路誤り率eの設定
         double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15};
-//        double[] eValues = 0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15
+//        double[] eValues = 0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15
 
         //タイム計測用配列
         double[] executionTimes = new double[3]; //トータルの実行時間
@@ -97,7 +97,7 @@ public class LDPC_LoadIntStream {
 
                 //メッセージと送信語、受信語の作成
                 int[] c = GenerateC.geneC(encodedG);
-                int[] r = Channel.GenerateR(c,eValues[eIndex],gLength);
+                int[] r = Channel.GenerateRBefore(c,eValues[eIndex],gLength);
 
                 //フレームごとの情報ビットの正誤
                 int currentInfoFrameErrorBits = 0;
@@ -116,7 +116,7 @@ public class LDPC_LoadIntStream {
                 long startDecode = System.nanoTime();
 
                 //対数領域sum-product復号,確率領域sum-product復号法,Min-Sum復号法
-                LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,eValues[eIndex],maxL);
+                LogDecoderBefore.DecodeResult result = LogDecoderBefore.decode(encodedH,r,eValues[eIndex],maxL);
 //                ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[eIndex],maxL);
 //                MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[eIndex],maxL);
 

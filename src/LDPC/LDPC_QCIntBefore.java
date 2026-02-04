@@ -8,28 +8,28 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.stream.IntStream;
 
-public class LDPC_QCIntStreamSimu {
+public class LDPC_QCIntBefore {
     public static void main(String[] args) {
 
         //ファイル名、毎回変える！！--------
-        String fileNAMEME = "final8-2(10_000-25)QC-Log";
+        String fileNAMEME = "(12-6)QL";
         //------------------------------
         String fileNames = fileNAMEME + "-result.csv"; //結果保存ファイル名
 
         //符号パラメータ
-        int z = 108;
-        int nb = 10; //行重み(n % wr = 0)
-        int mb = 5; //列重み
+        int z = 90;
+        int nb = 12; //行重み(n % wr = 0)
+        int mb = 6; //列重み
         int n = z * nb; //符号長
         int maxL = 50; //最大反復回数
         int numFrames = 10_000; //フレーム数
 
         //検査行列作成数
-        int numCM = 25;
+        int numCM = 1;
 
         //通信路誤り率eの集合
-        double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19};
-//            double[] e = 0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21,0.22,0.23
+        double[] eValues = {0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15};
+//            double[] e = 0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.14,0.15
 
         //タイム計測用配列
         double[][] executionTimes = new double[numCM][3]; //トータルの実行時間
@@ -101,7 +101,7 @@ public class LDPC_QCIntStreamSimu {
 
                     //メッセージと送信語、受信語の作成
                     int[] c = GenerateC.geneC(encodedG);
-                    int[] r = Channel.GenerateR(c,eValues[eIndex],gLength);
+                    int[] r = Channel.GenerateRBefore(c,eValues[eIndex],gLength);
 
                     //フレームごとの情報ビットの正誤
                     int currentInfoFrameErrorBits = 0;
@@ -120,7 +120,7 @@ public class LDPC_QCIntStreamSimu {
                     long startDecode = System.nanoTime();
 
                     //対数領域sum-product復号,確率領域sum-product復号法,Min-Sum復号法
-                    LogDecoder.DecodeResult result = LogDecoder.decode(encodedH,r,eValues[eIndex],maxL);
+                    LogDecoderBefore.DecodeResult result = LogDecoderBefore.decode(encodedH,r,eValues[eIndex],maxL);
 //                    ProbDecoder.DecodingResult result = ProbDecoder.decode(encodedH,r,eValues[eIndex],maxL);
 //                    MinSumDecoder.DecodeResult result = MinSumDecoder.decode(encodedH,r,eValues[eIndex],maxL);
 

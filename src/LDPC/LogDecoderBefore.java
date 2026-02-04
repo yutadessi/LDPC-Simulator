@@ -3,7 +3,7 @@ package LDPC;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LogDecoder {
+public class LogDecoderBefore {
 
     //逆ハイパボリックタンジェント
     public static double atanh(double x){
@@ -23,7 +23,7 @@ public class LogDecoder {
 
         int gLength = encodedH[0].length - encodedH.length;
 
-         //インデックスA,B
+        //インデックスA,B
         List<List<Integer>> A = new ArrayList<>(numC); // A(i)
         for (int i = 0; i < numC; i++) {
             A.add(new ArrayList<>());
@@ -41,19 +41,16 @@ public class LogDecoder {
             }
         }
 
-         //対数尤度比λ
+        //対数尤度比λ
         double[] lambda = new double[r.length];
         double l0 = Math.log((1 - e) / e);
-        double l1 = Math.log((1 - 0.00000000000000000001) / 0.00000000000000000001);
 
-        for(int j = 0;j < gLength;j++){
+        for(int j = 0;j < r.length;j++){
             lambda[j] = (r[j] == 0) ? l0 : -l0;
         }
-        for(int j = gLength;j < r.length;j++){
-            lambda[j] = (r[j] == 0) ? l1 : -l1;
-        }
 
-         //対数領域メッセージα,β
+
+        //対数領域メッセージα,β
         double[][] alpha = new double[numC][numV];
         double[][] beta = new double[numV][numC];
 

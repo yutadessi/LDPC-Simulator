@@ -25,5 +25,17 @@ public class Channel {
         double cBER = (double) countCBE/gLength;
         return cBER;
     }
+    public static int[] GenerateRBefore (int[] c,double e,int gLength){
+        int[] r = new int[c.length];
+        Random random = new Random();
+        for(int i = 0;i < r.length;i++){
+            if(random.nextDouble() < e){
+                r[i] = c[i] == 1 ? 0 : 1;
+            }else {
+                r[i] = c[i];
+            }
+        }
+        return r;
+    }
 
 }
